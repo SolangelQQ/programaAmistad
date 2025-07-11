@@ -1,3 +1,24 @@
+# services:
+#   - type: web
+#     name: best-buddies-bolivia
+#     env: php
+#     buildCommand: |
+#       composer install --no-dev --optimize-autoloader
+#       npm install
+#       npm run build
+#       php artisan config:cache
+#       php artisan route:cache
+#       php artisan view:cache
+#     startCommand: |
+#       php artisan serve --host=0.0.0.0 --port=$PORT
+#     envVars:
+#       - key: APP_ENV
+#         value: production
+#       - key: APP_DEBUG
+#         value: false
+#       - key: LOG_CHANNEL
+#         value: stderr
+
 services:
   - type: web
     name: best-buddies-bolivia
@@ -9,6 +30,7 @@ services:
       php artisan config:cache
       php artisan route:cache
       php artisan view:cache
+      php artisan storage:link
     startCommand: |
       php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
@@ -18,3 +40,10 @@ services:
         value: false
       - key: LOG_CHANNEL
         value: stderr
+      - key: APP_URL
+        fromService:
+          type: web
+          name: best-buddies-bolivia
+          property: host
+    # Asegurar que los assets se sirvan correctamente
+    staticPublishPath: public

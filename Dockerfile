@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libzip-dev \
     zip \
     unzip \
     nodejs \
@@ -16,8 +17,8 @@ RUN apt-get update && apt-get install -y \
 # Limpiar cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensiones PHP
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Instalar extensiones PHP (incluye zip)
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 # Limpiar cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensiones PHP (incluye PostgreSQL y MySQL)
+# Instalar extensiones PHP
 RUN docker-php-ext-install pdo_pgsql pgsql pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Instalar Composer
@@ -32,14 +32,19 @@ COPY ./apache-config.conf /etc/apache2/sites-available/000-default.conf
 # Establecer directorio de trabajo
 WORKDIR /var/www/html
 
+# Copiar package.json y package-lock.json primero (para cache)
+COPY package*.json ./
+
+# Instalar dependencias Node.js
+RUN npm ci --only=production
+
 # Copiar archivos del proyecto
 COPY . .
 
 # Instalar dependencias PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Instalar dependencias Node.js y compilar assets
-RUN npm install
+# Construir assets para producción
 RUN npm run build
 
 # Configurar permisos

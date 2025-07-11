@@ -1,3 +1,24 @@
+# services:
+#   - type: web
+#     name: best-buddies-bolivia
+#     env: php
+#     buildCommand: |
+#       composer install --no-dev --optimize-autoloader
+#       npm install
+#       npm run build
+#       php artisan config:cache
+#       php artisan route:cache
+#       php artisan view:cache
+#     startCommand: |
+#       php artisan serve --host=0.0.0.0 --port=$PORT
+#     envVars:
+#       - key: APP_ENV
+#         value: production
+#       - key: APP_DEBUG
+#         value: false
+#       - key: LOG_CHANNEL
+#         value: stderr
+
 services:
   - type: web
     name: best-buddies-bolivia
@@ -6,9 +27,9 @@ services:
       composer install --no-dev --optimize-autoloader
       npm install
       npm run build
-      php artisan config:cache
-      php artisan route:cache
-      php artisan view:cache
+      ls -la public/build/
+      echo "Build files created:"
+      ls -la public/build/assets/
     startCommand: |
       php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
@@ -18,4 +39,5 @@ services:
         value: false
       - key: LOG_CHANNEL
         value: stderr
-
+      - key: NODE_ENV
+        value: production

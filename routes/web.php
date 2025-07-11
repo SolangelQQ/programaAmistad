@@ -581,6 +581,10 @@ Route::get('/check-config', function() {
     ];
 });
 
+Route::get('/test', function () {
+    return view('test');
+});
+
 });
 
 require __DIR__.'/auth.php';

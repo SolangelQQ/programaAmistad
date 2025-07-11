@@ -13,8 +13,12 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     zip \
     unzip \
-    nodejs \
-    npm
+    ca-certificates \
+    gnupg
+
+# Instalar Node.js 18
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
 
 # Limpiar cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -32,20 +36,21 @@ COPY ./apache-config.conf /etc/apache2/sites-available/000-default.conf
 # Establecer directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiar package.json y package-lock.json primero (para cache)
-COPY package*.json ./
-
-# Instalar dependencias Node.js
-RUN npm ci --only=production
-
 # Copiar archivos del proyecto
 COPY . .
+
+# Limpiar problemas de PSR-4
+RUN rm -f database/factories/BuddyFactory.php database/factories/FriendshipFactory.php 2>/dev/null || true
 
 # Instalar dependencias PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Construir assets para producción
-RUN npm run build
+# Crear directorios necesarios
+RUN mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
+RUN mkdir -p public/storage public/build
+
+# Crear enlace simbólico para storage
+RUN ln -sf /var/www/html/storage/app/public /var/www/html/public/storage
 
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public

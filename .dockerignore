@@ -1,0 +1,3 @@
+database/factories/BuddyFactory.php
+database/factories/FriendshipFactory.php
+app/Http/Controllers/LiderazgoController.php

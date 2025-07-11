@@ -39,11 +39,12 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader
 
 # Instalar dependencias Node.js y compilar assets
-RUN npm install && npm run build
+RUN npm install
+RUN npm run build
 
 # Configurar permisos
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public
 
 # Crear archivo .env desde variables de entorno
 RUN touch /var/www/html/.env

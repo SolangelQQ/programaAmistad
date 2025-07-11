@@ -108,6 +108,7 @@ function quickInvite(userId) {
                         message: this.message.trim() || null
                     })
                 });
+                
 
                 const result = await response.json();
 

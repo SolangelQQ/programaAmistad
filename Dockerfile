@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     libpq-dev \
+    default-mysql-client \
     zip \
     unzip \
     nodejs \
@@ -18,8 +19,8 @@ RUN apt-get update && apt-get install -y \
 # Limpiar cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensiones PHP (incluye PostgreSQL)
-RUN docker-php-ext-install pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip
+# Instalar extensiones PHP (incluye PostgreSQL y MySQL)
+RUN docker-php-ext-install pdo_pgsql pgsql pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

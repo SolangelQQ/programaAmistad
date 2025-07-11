@@ -24,12 +24,14 @@ services:
     name: best-buddies-bolivia
     env: php
     buildCommand: |
+      echo "=== Installing PHP dependencies ==="
       composer install --no-dev --optimize-autoloader
-      npm install
+      echo "=== Installing Node.js dependencies ==="
+      npm ci --only=production
+      echo "=== Building assets ==="
       npm run build
-      ls -la public/build/
-      echo "Build files created:"
-      ls -la public/build/assets/
+      echo "=== Listing build files ==="
+      ls -la public/build/ || echo "Build directory not found"
     startCommand: |
       php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:

@@ -1,0 +1,18 @@
+{
+    "The email field is required.": "El campo de correo electrónico es obligatorio.",
+    "The password field is required.": "El campo de contraseña es obligatorio.",
+    "These credentials do not match our records.": "Estas credenciales no coinciden con nuestros registros.",
+    "The password must be at least 8 characters.": "La contraseña debe tener al menos 8 caracteres.",
+    "The email must be a valid email address.": "El correo electrónico debe ser una dirección válida.",
+    "The provided password is incorrect.": "La contraseña proporcionada es incorrecta.",
+    "The password confirmation does not match.": "La confirmación de contraseña no coincide.",
+    "Login": "Iniciar sesión",
+    "Register": "Registrarse",
+    "Email": "Correo electrónico",
+    "Password": "Contraseña",
+    "Confirm Password": "Confirmar Contraseña",
+    "Name": "Nombre",
+    "Remember Me": "Recordarme",
+    "Forgot Your Password?": "¿Olvidaste tu contraseña?",
+    "Reset Password": "Restablecer contraseña"
+}

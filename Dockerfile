@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
+    libpq-dev \
     zip \
     unzip \
     nodejs \
@@ -17,8 +18,8 @@ RUN apt-get update && apt-get install -y \
 # Limpiar cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensiones PHP (incluye zip)
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+# Instalar extensiones PHP (incluye PostgreSQL)
+RUN docker-php-ext-install pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -42,6 +43,9 @@ RUN npm install && npm run build
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Crear archivo .env desde variables de entorno
+RUN touch /var/www/html/.env
 
 # Crear script de inicio
 COPY start.sh /usr/local/bin/start.sh

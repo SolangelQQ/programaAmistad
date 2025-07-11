@@ -26,15 +26,7 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-     build: {
-        // Asegura que se generen los archivos correctamente
-        outDir: 'public/build',
-        rollupOptions: {
-            output: {
-                manualChunks: undefined,
-            },
-        },
-    },
+    
     resolve: {
         alias: {
             // Ensure public assets can be found

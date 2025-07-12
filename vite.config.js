@@ -26,14 +26,6 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    css: {
-        postcss: {
-            plugins: [
-                require('tailwindcss'),
-                require('autoprefixer'),
-            ],
-        },
-    },
     build: {
         // Asegura que se generen los archivos correctamente
         outDir: 'public/build',
@@ -49,11 +41,11 @@ export default defineConfig({
     //         input: 'resources/css/app.css'
     //     }
     // },
-    resolve: {
-        alias: {
-            // Ensure public assets can be found
-            '@public': '/public'
-        },
-    },
-    publicDir: 'public',
+    // resolve: {
+    //     alias: {
+    //         // Ensure public assets can be found
+    //         '@public': '/public'
+    //     },
+    // },
+    // publicDir: 'public',
 });

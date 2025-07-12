@@ -28,6 +28,7 @@ export default defineConfig({
     ],
     build: {
         // Asegura que se generen los archivos correctamente
+        manifest: true,
         outDir: 'public/build',
         rollupOptions: {
             output: {

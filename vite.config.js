@@ -26,26 +26,25 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    // build: {
+    //     // Asegura que se generen los archivos correctamente
+    //     outDir: 'public/build',
+    //     rollupOptions: {
+    //         output: {
+    //             manualChunks: undefined,
+    //         },
+    //     },
+    // },
     build: {
-        // Asegura que se generen los archivos correctamente
-        outDir: 'public/build',
+        manifest: true,
         rollupOptions: {
-            output: {
-                manualChunks: undefined,
-            },
-        },
+            input: 'resources/css/app.css'
+        }
     },
     resolve: {
         alias: {
             // Ensure public assets can be found
             '@public': '/public'
-        },
-    },
-    server: {
-        host: '0.0.0.0',
-        port: 5174,
-        hmr: {
-            host: 'localhost',
         },
     },
     publicDir: 'public',

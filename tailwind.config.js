@@ -6,11 +6,11 @@ export default {
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
-        "./public/**/*.js",
         './resources/views/**/*.blade.php',
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
         "./resources/**/*.vue",
+        "./public/**/*.js",
     ],
     darkMode: 'class',
 
@@ -22,5 +22,5 @@ export default {
         },
     },
 
-    plugins: [forms, require('@tailwindcss/forms')],
+    plugins: [forms],
 };

@@ -26,6 +26,14 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    css: {
+        postcss: {
+            plugins: [
+                require('tailwindcss'),
+                require('autoprefixer'),
+            ],
+        },
+    },
     build: {
         // Asegura que se generen los archivos correctamente
         outDir: 'public/build',

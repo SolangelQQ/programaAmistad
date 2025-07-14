@@ -217,99 +217,143 @@ public function show(Friendship $friendship){
     // }
 
     public function store(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'buddy_id' => 'required|exists:buddies,id',
-            'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
-            'buddy_leader_id' => 'required|exists:users,id',
-            'peer_buddy_leader_id' => 'required|exists:users,id',
-            'start_date' => 'required|date',
-            'status' => 'required|string',
-            'notes' => 'nullable|string'
-        ]);
-
-        // Verificar tipos
-        $buddy = Buddy::findOrFail($validated['buddy_id']);
-        $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
-        
-        // Verificar que los líderes tengan los roles correctos
-        $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
-        $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
-
-        if ($buddy->type !== 'buddy') {
-            return back()->with('error', 'El Buddy seleccionado debe ser una persona con discapacidad');
-        }
-
-        if ($peerBuddy->type !== 'peer_buddy') {
-            return back()->with('error', 'El PeerBuddy seleccionado debe ser una persona sin discapacidad');
-        }
-
-        if (!$buddyLeader->role || $buddyLeader->role->name !== 'Líder de Buddies') {
-            return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de Buddies');
-        }
-
-        if (!$peerBuddyLeader->role || $peerBuddyLeader->role->name !== 'Líder de PeerBuddies') {
-            return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de PeerBuddies');
-        }
-
-        // Verificar relación existente
-        $existing = Friendship::where(function($q) use ($validated) {
-            $q->where('buddy_id', $validated['buddy_id'])
-              ->where('peer_buddy_id', $validated['peer_buddy_id']);
-        })->orWhere(function($q) use ($validated) {
-            $q->where('buddy_id', $validated['peer_buddy_id'])
-              ->where('peer_buddy_id', $validated['buddy_id']);
-        })->exists();
-
-        if ($existing) {
-            return back()->with('error', 'Esta relación de amistad ya existe');
-        }
-
-        // Crear la amistad
-        $friendship = Friendship::create($validated);
-
-        // CORRECCIÓN: Verificar si es una petición AJAX
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Emparejamiento creado exitosamente',
-                'friendship' => $friendship,
-                'redirect' => route('friendships.index')
+    {
+        try {
+            Log::info('FriendshipController@store called', [
+                'request_data' => $request->all(),
+                'is_ajax' => $request->ajax(),
+                'expects_json' => $request->expectsJson()
             ]);
-        }
 
-        // Para peticiones normales, redirigir correctamente
-        return redirect()->route('friendships.index')
-            ->with('success', 'Emparejamiento creado exitosamente');
+            $validated = $request->validate([
+                'buddy_id' => 'required|exists:buddies,id',
+                'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
+                'buddy_leader_id' => 'required|exists:users,id',
+                'peer_buddy_leader_id' => 'required|exists:users,id',
+                'start_date' => 'required|date',
+                'status' => 'required|string|in:Emparejado,Inactivo',
+                'notes' => 'nullable|string'
+            ]);
 
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $e->errors()
-            ], 422);
+            Log::info('Validation passed', ['validated' => $validated]);
+
+            // Verificar tipos de buddy
+            $buddy = Buddy::findOrFail($validated['buddy_id']);
+            $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
+
+            if ($buddy->type !== 'buddy') {
+                $error = 'El Buddy seleccionado debe ser una persona con discapacidad';
+                Log::warning('Invalid buddy type', ['buddy_id' => $buddy->id, 'type' => $buddy->type]);
+                
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $error], 400);
+                }
+                return back()->with('error', $error);
+            }
+
+            if ($peerBuddy->type !== 'peer_buddy') {
+                $error = 'El PeerBuddy seleccionado debe ser una persona sin discapacidad';
+                Log::warning('Invalid peer buddy type', ['peer_buddy_id' => $peerBuddy->id, 'type' => $peerBuddy->type]);
+                
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $error], 400);
+                }
+                return back()->with('error', $error);
+            }
+
+            // Verificar roles de líderes
+            $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
+            $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
+
+            if (!$buddyLeader->role || $buddyLeader->role->name !== 'Líder de Buddies') {
+                $error = 'El usuario seleccionado debe tener el rol de Líder de Buddies';
+                Log::warning('Invalid buddy leader role', ['user_id' => $buddyLeader->id, 'role' => $buddyLeader->role?->name]);
+                
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $error], 400);
+                }
+                return back()->with('error', $error);
+            }
+
+            if (!$peerBuddyLeader->role || $peerBuddyLeader->role->name !== 'Líder de PeerBuddies') {
+                $error = 'El usuario seleccionado debe tener el rol de Líder de PeerBuddies';
+                Log::warning('Invalid peer buddy leader role', ['user_id' => $peerBuddyLeader->id, 'role' => $peerBuddyLeader->role?->name]);
+                
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $error], 400);
+                }
+                return back()->with('error', $error);
+            }
+
+            // Verificar si ya existe una relación
+            $existing = Friendship::where(function($q) use ($validated) {
+                $q->where('buddy_id', $validated['buddy_id'])
+                  ->where('peer_buddy_id', $validated['peer_buddy_id']);
+            })->orWhere(function($q) use ($validated) {
+                $q->where('buddy_id', $validated['peer_buddy_id'])
+                  ->where('peer_buddy_id', $validated['buddy_id']);
+            })->exists();
+
+            if ($existing) {
+                $error = 'Esta relación de amistad ya existe';
+                Log::warning('Duplicate friendship attempt', ['buddy_id' => $validated['buddy_id'], 'peer_buddy_id' => $validated['peer_buddy_id']]);
+                
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $error], 400);
+                }
+                return back()->with('error', $error);
+            }
+
+            // Crear el emparejamiento
+            $friendship = Friendship::create($validated);
+            
+            Log::info('Friendship created successfully', ['friendship_id' => $friendship->id]);
+
+            $success_message = 'Emparejamiento creado exitosamente';
+
+            // Respuesta para AJAX
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $success_message,
+                    'friendship' => $friendship,
+                    'redirect' => route('friendships.index')
+                ]);
+            }
+
+            // Respuesta para petición normal
+            return redirect()->route('friendships.index')->with('success', $success_message);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error in FriendshipController@store', ['errors' => $e->errors()]);
+            
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $e->errors(),
+                    'message' => 'Error de validación'
+                ], 422);
+            }
+            return back()->withErrors($e->errors())->withInput();
+            
+        } catch (\Exception $e) {
+            Log::error('Error in FriendshipController@store: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $error_message = 'Error interno del servidor. Por favor, inténtelo nuevamente.';
+            
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $error_message
+                ], 500);
+            }
+            
+            return back()->with('error', $error_message);
         }
-        return back()->withErrors($e->errors())->withInput();
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Registro no encontrado: ' . $e->getMessage()
-            ], 404);
-        }
-        return back()->with('error', 'Registro no encontrado: ' . $e->getMessage());
-    } catch (\Exception $e) {
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error interno del servidor. Por favor, inténtelo nuevamente.'
-            ], 500);
-        }
-        return back()->with('error', 'Error interno del servidor. Por favor, inténtelo nuevamente.');
     }
-}
-
+    
     public function updateStatus(Request $request, Friendship $friendship)
     {
         $validated = $request->validate([

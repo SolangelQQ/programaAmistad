@@ -230,7 +230,6 @@
     }
 });
 </script> -->
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
     console.log('Friendship system initialized');
@@ -404,59 +403,100 @@
         }
     };
     
-    // === VALIDACIÓN DEL FORMULARIO DE NUEVO EMPAREJAMIENTO ===
+    // === VALIDACIÓN Y ENVÍO DEL FORMULARIO DE NUEVO EMPAREJAMIENTO ===
     
     const newFriendshipForm = document.getElementById('new-friendship-form');
     if (newFriendshipForm) {
         newFriendshipForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevenir envío normal del formulario
+            
             console.log('Formulario de nuevo emparejamiento enviado');
             
-            const buddyId = document.getElementById('buddy_id')?.value;
-            const peerBuddyId = document.getElementById('peer_buddy_id')?.value;
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
             
-            console.log('Buddy ID:', buddyId);
-            console.log('PeerBuddy ID:', peerBuddyId);
+            console.log('Datos del formulario:', data);
             
-            // Validar que ambos campos estén seleccionados
-            if (!buddyId || !peerBuddyId) {
-                e.preventDefault();
+            // Validaciones del lado del cliente
+            if (!data.buddy_id || !data.peer_buddy_id) {
                 alert('Por favor selecciona un Buddy y un PeerBuddy');
                 return false;
             }
             
-            // Validar que no sean el mismo
-            if (buddyId === peerBuddyId) {
-                e.preventDefault();
+            if (data.buddy_id === data.peer_buddy_id) {
                 alert('No puedes emparejar una persona consigo misma');
                 return false;
             }
             
-            // Validar fecha de inicio
-            const startDate = document.getElementById('start_date')?.value;
-            if (!startDate) {
-                e.preventDefault();
+            if (!data.start_date) {
                 alert('Por favor selecciona una fecha de inicio');
                 return false;
             }
             
-            // Validar campos adicionales (opcionales pero útiles)
-            const buddyLeaderId = document.getElementById('buddy_leader_id')?.value;
-            const peerBuddyLeaderId = document.getElementById('peer_buddy_leader_id')?.value;
-            const notes = document.getElementById('notes')?.value;
-            const status = document.getElementById('status')?.value || 'Emparejado';
+            if (!data.buddy_leader_id) {
+                alert('Por favor selecciona un líder de Buddy');
+                return false;
+            }
             
-            console.log('Datos del formulario:', {
-                buddyId,
-                peerBuddyId,
-                buddyLeaderId,
-                peerBuddyLeaderId,
-                startDate,
-                status,
-                notes
+            if (!data.peer_buddy_leader_id) {
+                alert('Por favor selecciona un líder de PeerBuddy');
+                return false;
+            }
+            
+            // Mostrar loader si existe
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Creando...';
+            
+            // Enviar formulario via AJAX
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                console.log('Respuesta del servidor:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                console.log('Datos de respuesta:', data);
+                
+                if (data.success) {
+                    alert('Emparejamiento creado exitosamente');
+                    closeNewFriendshipModal();
+                    
+                    // Resetear formulario
+                    this.reset();
+                    
+                    // Recargar la página o actualizar la tabla
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    console.error('Error en la respuesta:', data);
+                    alert(data.message || 'Error al crear el emparejamiento');
+                }
+            })
+            .catch(error => {
+                console.error('Error al enviar formulario:', error);
+                alert('Error al crear el emparejamiento. Por favor, inténtalo de nuevo.');
+            })
+            .finally(() => {
+                // Restaurar botón
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
             });
-            
-            console.log('Validación exitosa, enviando formulario...');
-            return true;
         });
     } else {
         console.error('Formulario new-friendship-form no encontrado');
@@ -546,29 +586,12 @@
         'start_date'
     ];
     
-    const optionalElements = [
-        'buddy_leader_id',
-        'peer_buddy_leader_id', 
-        'notes',
-        'status',
-        'end_date'
-    ];
-    
     requiredElements.forEach(elementId => {
         const element = document.getElementById(elementId);
         if (!element) {
             console.error(`Elemento requerido no encontrado: ${elementId}`);
         } else {
             console.log(`Elemento encontrado: ${elementId}`);
-        }
-    });
-    
-    optionalElements.forEach(elementId => {
-        const element = document.getElementById(elementId);
-        if (element) {
-            console.log(`Elemento opcional encontrado: ${elementId}`);
-        } else {
-            console.warn(`Elemento opcional no encontrado: ${elementId}`);
         }
     });
     

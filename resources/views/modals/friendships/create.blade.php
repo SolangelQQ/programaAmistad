@@ -132,7 +132,7 @@
     </div>
 </div>
 
-<!-- <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
     // Funcionalidad para abrir/cerrar modales de FRIENDSHIPS
     window.openNewFriendshipModal = function() {
@@ -319,4 +319,4 @@
         });
     }
 });
-</script> -->
+</script>

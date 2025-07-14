@@ -219,11 +219,6 @@ public function show(Friendship $friendship){
     public function store(Request $request)
 {
     try {
-        // Log para debug
-        \Log::info('Iniciando creación de amistad', [
-            'request_data' => $request->all()
-        ]);
-
         $validated = $request->validate([
             'buddy_id' => 'required|exists:buddies,id',
             'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
@@ -273,33 +268,44 @@ public function show(Friendship $friendship){
 
         // Crear la amistad
         $friendship = Friendship::create($validated);
-        
-        \Log::info('Amistad creada exitosamente', [
-            'friendship_id' => $friendship->id
-        ]);
 
-        // CAMBIO IMPORTANTE: Usar la URL absoluta en lugar de route()
-        return redirect('/friendships')
+        // CORRECCIÓN: Verificar si es una petición AJAX
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Emparejamiento creado exitosamente',
+                'friendship' => $friendship,
+                'redirect' => route('friendships.index')
+            ]);
+        }
+
+        // Para peticiones normales, redirigir correctamente
+        return redirect()->route('friendships.index')
             ->with('success', 'Emparejamiento creado exitosamente');
 
     } catch (\Illuminate\Validation\ValidationException $e) {
-        \Log::error('Error de validación en friendship store', [
-            'errors' => $e->errors(),
-            'request_data' => $request->all()
-        ]);
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors()
+            ], 422);
+        }
         return back()->withErrors($e->errors())->withInput();
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        \Log::error('Modelo no encontrado en friendship store', [
-            'error' => $e->getMessage(),
-            'request_data' => $request->all()
-        ]);
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Registro no encontrado: ' . $e->getMessage()
+            ], 404);
+        }
         return back()->with('error', 'Registro no encontrado: ' . $e->getMessage());
     } catch (\Exception $e) {
-        \Log::error('Error general en friendship store', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'request_data' => $request->all()
-        ]);
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor. Por favor, inténtelo nuevamente.'
+            ], 500);
+        }
         return back()->with('error', 'Error interno del servidor. Por favor, inténtelo nuevamente.');
     }
 }

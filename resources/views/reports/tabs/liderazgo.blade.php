@@ -8,19 +8,47 @@
     </div>
 
     <!-- Error State -->
-    <div x-show="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+    <div x-show="error && !loading" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+        <div class="flex items-center mb-4">
+            <svg class="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
             </svg>
             <div>
-                <h3 class="text-sm font-medium text-red-800">Error al cargar datos</h3>
-                <p class="text-sm text-red-700 mt-1" x-text="error"></p>
+                <h3 class="text-lg font-medium text-yellow-800">Configuración Inicial Requerida</h3>
+                <p class="text-sm text-yellow-700 mt-1">Para poder generar reportes de liderazgo, necesitas completar algunos pasos previos.</p>
             </div>
         </div>
-        <div class="mt-3">
-            <button @click="refreshData()" class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded text-sm font-medium">
-                Reintentar
+        
+        <div class="bg-yellow-100 rounded-lg p-4 mb-4">
+            <h4 class="font-medium text-yellow-800 mb-2">Pasos requeridos:</h4>
+            <ul class="text-sm text-yellow-700 space-y-1">
+                <li class="flex items-start">
+                    <span class="inline-block w-2 h-2 bg-yellow-600 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>Completar el seguimiento de emparejamiento de amistad</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="inline-block w-2 h-2 bg-yellow-600 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>Generar reportes mensuales de monitoreo</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="inline-block w-2 h-2 bg-yellow-600 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>Registrar evaluaciones de monitores</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button @click="goToMatching()" class="inline-flex items-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-md transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Ir a Emparejamiento
+            </button>
+            <button @click="refreshData()" class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-yellow-700 text-sm font-medium rounded-md border border-yellow-300 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Verificar Nuevamente
             </button>
         </div>
     </div>
@@ -33,7 +61,7 @@
                 <h3 class="text-lg font-semibold text-gray-900">Análisis de Liderazgo</h3>
                 <p class="text-sm text-gray-600">Evaluación del desempeño de monitores de amistad</p>
             </div>
-            <!-- <div class="flex space-x-2">
+            <div class="flex space-x-2">
                 <button @click="exportPDF()" class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100">
                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-5L9 2H4z"/>
@@ -59,56 +87,55 @@
                     </svg>
                     Actualizar
                 </button>
-            </div> -->
+            </div>
         </div>
 
         <!-- Summary Cards -->
-        <!-- Summary Cards de Liderazgo - Mejoradas para responsividad -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-    <!-- Total Monitores -->
-    <div class="bg-purple-50 p-4 sm:p-6 rounded-lg">
-        <div class="flex items-center">
-            <i class="fas fa-users text-purple-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
-            <div class="min-w-0 flex-1">
-                <p class="text-xs sm:text-sm text-gray-600 truncate">Total Monitores</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.totalLeaders || 0"></p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <!-- Total Monitores -->
+            <div class="bg-purple-50 p-4 sm:p-6 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-users text-purple-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs sm:text-sm text-gray-600 truncate">Total Monitores</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.totalLeaders || 0"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Muy Activos -->
+            <div class="bg-green-50 p-4 sm:p-6 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs sm:text-sm text-gray-600 truncate">Muy Activos</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.veryActive || 0"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Requieren Atención -->
+            <div class="bg-yellow-50 p-4 sm:p-6 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs sm:text-sm text-gray-600 truncate">Requieren Atención</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.needsAttention || 0"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Satisfacción Promedio -->
+            <div class="bg-blue-50 p-4 sm:p-6 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-star text-blue-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs sm:text-sm text-gray-600 truncate">Satisfacción Promedio</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.avgSatisfaction || 0"></p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Muy Activos -->
-    <div class="bg-green-50 p-4 sm:p-6 rounded-lg">
-        <div class="flex items-center">
-            <i class="fas fa-check-circle text-green-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
-            <div class="min-w-0 flex-1">
-                <p class="text-xs sm:text-sm text-gray-600 truncate">Muy Activos</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.veryActive || 0"></p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Requieren Atención -->
-    <div class="bg-yellow-50 p-4 sm:p-6 rounded-lg">
-        <div class="flex items-center">
-            <i class="fas fa-exclamation-triangle text-yellow-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
-            <div class="min-w-0 flex-1">
-                <p class="text-xs sm:text-sm text-gray-600 truncate">Requieren Atención</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.needsAttention || 0"></p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Satisfacción Promedio -->
-    <div class="bg-blue-50 p-4 sm:p-6 rounded-lg">
-        <div class="flex items-center">
-            <i class="fas fa-star text-blue-600 text-xl sm:text-2xl mr-3 flex-shrink-0"></i>
-            <div class="min-w-0 flex-1">
-                <p class="text-xs sm:text-sm text-gray-600 truncate">Satisfacción Promedio</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-900" x-text="stats.avgSatisfaction || 0"></p>
-            </div>
-        </div>
-    </div>
-</div>
 
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -256,15 +283,9 @@ function liderazgoTab() {
                 console.log('Status de respuesta:', response.status);
                 
                 if (!response.ok) {
-                    let errorMessage = `Error HTTP ${response.status}`;
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorMessage;
-                    } catch (e) {
-                        const errorText = await response.text();
-                        errorMessage = errorText || errorMessage;
-                    }
-                    throw new Error(errorMessage);
+                    // Manejo mejorado de errores
+                    this.error = true;
+                    return;
                 }
                 
                 const data = await response.json();
@@ -288,12 +309,12 @@ function liderazgoTab() {
                         }
                     });
                 } else {
-                    throw new Error(data.message || 'Respuesta inválida del servidor');
+                    this.error = true;
                 }
                 
             } catch (error) {
                 console.error('Error loading leadership data:', error);
-                this.error = error.message;
+                this.error = true;
                 
             } finally {
                 this.loading = false;
@@ -453,6 +474,11 @@ function liderazgoTab() {
                 'critica': 'bg-gray-100 text-gray-800'
             };
             return classes[evaluation] || 'bg-gray-100 text-gray-800';
+        },
+
+        goToMatching() {
+            // Redirigir a la sección de emparejamiento
+            window.location.href = '/emparejamiento';
         },
 
         async exportPDF() {

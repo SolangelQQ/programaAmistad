@@ -23,7 +23,7 @@
 </div>
 
 <!-- Existing Modals (New Friendship, Edit Friendship, Delete Confirmation) from previous code -->
-@include('modals.friendships.create')
+<!-- @include('modals.friendships.create') -->
 
 @include('modals.friendships.edit')
 @include('modals.friendships.delete')
@@ -36,50 +36,15 @@
 
 <!-- Activities Modals -->
 @include('modals.activities.create')
-
+@include('modals.friendships.create')
 
 
 <!-- Include the fixed JS file -->
 <!-- <script src="{{ asset('js/friendships.js') }}"></script> -->
-<script>
+<!-- <script>
     document.addEventListener('DOMContentLoaded', function() {
     // Funcionalidad para abrir/cerrar modales de FRIENDSHIPS
-    // Agrega esto dentro del DOMContentLoaded
-const newFriendshipForm = document.getElementById('new-friendship-form');
-if (newFriendshipForm) {
-    newFriendshipForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const submitButton = this.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-        
-        fetch(this.action, {
-            method: this.method,
-            body: new FormData(this),
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload(); // O actualiza solo la sección necesaria
-            } else {
-                throw new Error(data.message || 'Error al crear el emparejamiento');
-            }
-        })
-        .catch(error => {
-            alert(error.message);
-        })
-        .finally(() => {
-            submitButton.disabled = false;
-            submitButton.textContent = 'Guardar';
-        });
-    });
-}
-
+    
     window.openNewFriendshipModal = function() {
         document.getElementById('new-friendship-modal').classList.remove('hidden');
     };
@@ -263,6 +228,351 @@ if (newFriendshipForm) {
             }
         });
     }
+});
+</script> -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    console.log('Friendship system initialized');
+    
+    // === FUNCIONES PARA MODALES DE EMPAREJAMIENTO ===
+    
+    // Abrir modal de nuevo emparejamiento
+    window.openNewFriendshipModal = function() {
+        const modal = document.getElementById('new-friendship-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            console.log('Modal de nuevo emparejamiento abierto');
+        } else {
+            console.error('Modal new-friendship-modal no encontrado');
+        }
+    };
+    
+    // Cerrar modal de nuevo emparejamiento
+    window.closeNewFriendshipModal = function() {
+        const modal = document.getElementById('new-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            console.log('Modal de nuevo emparejamiento cerrado');
+        }
+    };
+    
+    // Ver detalles del emparejamiento
+    window.viewFriendshipDetails = function(friendshipId) {
+        console.log('Viendo detalles del emparejamiento:', friendshipId);
+        
+        fetch(`/friendships/${friendshipId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Datos del emparejamiento recibidos:', data);
+                
+                // Actualizar información del emparejamiento
+                const setTextContent = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value;
+                    } else {
+                        console.warn(`Elemento ${id} no encontrado`);
+                    }
+                };
+                
+                setTextContent('view_friendship_id', data.friendship.id);
+                setTextContent('view_start_date', data.friendship.start_date);
+                setTextContent('view_end_date', data.friendship.end_date || 'N/A');
+                setTextContent('view_notes', data.friendship.notes || 'Sin notas');
+                
+                // Actualizar badge de status
+                const statusBadge = document.getElementById('view_status_badge');
+                if (statusBadge) {
+                    statusBadge.textContent = data.friendship.status;
+                    // Limpiar clases anteriores
+                    statusBadge.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-yellow-100', 'text-yellow-800');
+                    
+                    // Aplicar clases según el status
+                    if (data.friendship.status === 'Emparejado') {
+                        statusBadge.classList.add('bg-green-100', 'text-green-800');
+                    } else if (data.friendship.status === 'Inactivo') {
+                        statusBadge.classList.add('bg-red-100', 'text-red-800');
+                    } else {
+                        statusBadge.classList.add('bg-yellow-100', 'text-yellow-800');
+                    }
+                }
+                
+                // Actualizar información del buddy
+                setTextContent('view_buddy_name', `${data.buddy.first_name} ${data.buddy.last_name}`);
+                setTextContent('view_buddy_disability', data.buddy.disability || 'N/A');
+                setTextContent('view_buddy_age', `${data.buddy.age} años`);
+                setTextContent('view_buddy_ci', data.buddy.ci);
+                setTextContent('view_buddy_phone', data.buddy.phone);
+                setTextContent('view_buddy_email', data.buddy.email || 'N/A');
+                setTextContent('view_buddy_address', data.buddy.address);
+                
+                // Actualizar información del peerbuddy
+                setTextContent('view_peerbuddy_name', `${data.peerBuddy.first_name} ${data.peerBuddy.last_name}`);
+                setTextContent('view_peerbuddy_age', `${data.peerBuddy.age} años`);
+                setTextContent('view_peerbuddy_ci', data.peerBuddy.ci);
+                setTextContent('view_peerbuddy_phone', data.peerBuddy.phone);
+                setTextContent('view_peerbuddy_email', data.peerBuddy.email || 'N/A');
+                setTextContent('view_peerbuddy_address', data.peerBuddy.address);
+                
+                // Mostrar modal
+                const viewModal = document.getElementById('view-friendship-modal');
+                if (viewModal) {
+                    viewModal.classList.remove('hidden');
+                } else {
+                    console.error('Modal view-friendship-modal no encontrado');
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar los datos del emparejamiento:', error);
+                alert('Error al cargar los datos del emparejamiento');
+            });
+    };
+    
+    // Cerrar modal de ver emparejamiento
+    window.closeViewFriendshipModal = function() {
+        const modal = document.getElementById('view-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    // Abrir modal de editar emparejamiento
+    window.openEditFriendshipModal = function(friendshipId, startDate, endDate, status, notes, buddyLeaderId, peerBuddyLeaderId) {
+        const form = document.getElementById('edit-friendship-form');
+        if (form) {
+            form.action = `/friendships/${friendshipId}`;
+        }
+        
+        const setFieldValue = (id, value) => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.value = value || '';
+            } else {
+                console.warn(`Campo ${id} no encontrado`);
+            }
+        };
+        
+        setFieldValue('edit_start_date', startDate);
+        setFieldValue('edit_end_date', endDate);
+        setFieldValue('edit_status', status);
+        setFieldValue('edit_notes', notes);
+        setFieldValue('edit_buddy_leader_id', buddyLeaderId);
+        setFieldValue('edit_peer_buddy_leader_id', peerBuddyLeaderId);
+        
+        const editModal = document.getElementById('edit-friendship-modal');
+        if (editModal) {
+            editModal.classList.remove('hidden');
+        } else {
+            console.error('Modal edit-friendship-modal no encontrado');
+        }
+    };
+    
+    // Cerrar modal de editar emparejamiento
+    window.closeEditFriendshipModal = function() {
+        const modal = document.getElementById('edit-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    // Confirmar eliminación de emparejamiento
+    window.confirmDelete = function(friendshipId) {
+        const form = document.getElementById('delete-friendship-form');
+        if (form) {
+            form.action = `/friendships/${friendshipId}`;
+        }
+        
+        const deleteModal = document.getElementById('delete-confirmation-modal');
+        if (deleteModal) {
+            deleteModal.classList.remove('hidden');
+        } else {
+            console.error('Modal delete-confirmation-modal no encontrado');
+        }
+    };
+    
+    // Cerrar modal de eliminar
+    window.closeDeleteModal = function() {
+        const modal = document.getElementById('delete-confirmation-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    // === VALIDACIÓN DEL FORMULARIO DE NUEVO EMPAREJAMIENTO ===
+    
+    const newFriendshipForm = document.getElementById('new-friendship-form');
+    if (newFriendshipForm) {
+        newFriendshipForm.addEventListener('submit', function(e) {
+            console.log('Formulario de nuevo emparejamiento enviado');
+            
+            const buddyId = document.getElementById('buddy_id')?.value;
+            const peerBuddyId = document.getElementById('peer_buddy_id')?.value;
+            
+            console.log('Buddy ID:', buddyId);
+            console.log('PeerBuddy ID:', peerBuddyId);
+            
+            // Validar que ambos campos estén seleccionados
+            if (!buddyId || !peerBuddyId) {
+                e.preventDefault();
+                alert('Por favor selecciona un Buddy y un PeerBuddy');
+                return false;
+            }
+            
+            // Validar que no sean el mismo
+            if (buddyId === peerBuddyId) {
+                e.preventDefault();
+                alert('No puedes emparejar una persona consigo misma');
+                return false;
+            }
+            
+            // Validar fecha de inicio
+            const startDate = document.getElementById('start_date')?.value;
+            if (!startDate) {
+                e.preventDefault();
+                alert('Por favor selecciona una fecha de inicio');
+                return false;
+            }
+            
+            // Validar campos adicionales (opcionales pero útiles)
+            const buddyLeaderId = document.getElementById('buddy_leader_id')?.value;
+            const peerBuddyLeaderId = document.getElementById('peer_buddy_leader_id')?.value;
+            const notes = document.getElementById('notes')?.value;
+            const status = document.getElementById('status')?.value || 'Emparejado';
+            
+            console.log('Datos del formulario:', {
+                buddyId,
+                peerBuddyId,
+                buddyLeaderId,
+                peerBuddyLeaderId,
+                startDate,
+                status,
+                notes
+            });
+            
+            console.log('Validación exitosa, enviando formulario...');
+            return true;
+        });
+    } else {
+        console.error('Formulario new-friendship-form no encontrado');
+    }
+    
+    // === FUNCIONES PARA TABS ===
+    
+    const switchToTab = function(targetSectionId) {
+        console.log('Cambiando a tab:', targetSectionId);
+        
+        const allSections = ['friendships-section', 'activities-section', 'buddies-section'];
+        
+        // Ocultar todas las secciones
+        allSections.forEach(sectionId => {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.add('hidden');
+            }
+        });
+        
+        // Mostrar la sección objetivo
+        const targetSection = document.getElementById(targetSectionId);
+        if (targetSection) {
+            targetSection.classList.remove('hidden');
+            console.log('Sección mostrada:', targetSectionId);
+        } else {
+            console.error('Sección no encontrada:', targetSectionId);
+        }
+        
+        // Actualizar estilos de tabs
+        document.querySelectorAll('.tab-link').forEach(tab => {
+            tab.classList.remove('border-indigo-500', 'text-gray-900');
+            tab.classList.add('border-transparent', 'text-gray-500');
+        });
+        
+        const activeTab = document.querySelector(`[data-target="${targetSectionId}"]`);
+        if (activeTab) {
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-indigo-500', 'text-gray-900');
+        }
+    };
+    
+    // Event listeners para tabs
+    document.querySelectorAll('.tab-link').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            console.log('Tab clickeado, objetivo:', targetId);
+            switchToTab(targetId);
+        });
+    });
+    
+    // Activar tab inicial
+    setTimeout(() => {
+        switchToTab('friendships-section');
+    }, 100);
+    
+    // === FUNCIONES PARA CERRAR MODALES AL HACER CLICK FUERA ===
+    
+    // Cerrar modales al hacer click fuera de ellos
+    const modalIds = [
+        'new-friendship-modal',
+        'view-friendship-modal', 
+        'edit-friendship-modal',
+        'delete-confirmation-modal'
+    ];
+    
+    modalIds.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+        }
+    });
+    
+    // === DEBUGGING Y VERIFICACIÓN ===
+    
+    // Verificar que todos los elementos necesarios existan
+    const requiredElements = [
+        'new-friendship-modal',
+        'new-friendship-form',
+        'buddy_id',
+        'peer_buddy_id',
+        'start_date'
+    ];
+    
+    const optionalElements = [
+        'buddy_leader_id',
+        'peer_buddy_leader_id', 
+        'notes',
+        'status',
+        'end_date'
+    ];
+    
+    requiredElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.error(`Elemento requerido no encontrado: ${elementId}`);
+        } else {
+            console.log(`Elemento encontrado: ${elementId}`);
+        }
+    });
+    
+    optionalElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            console.log(`Elemento opcional encontrado: ${elementId}`);
+        } else {
+            console.warn(`Elemento opcional no encontrado: ${elementId}`);
+        }
+    });
+    
+    console.log('Inicialización de emparejamientos completada');
 });
 </script>
 <!-- <script src="{{ asset('js/buddies.js') }}"></script> -->

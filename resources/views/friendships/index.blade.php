@@ -44,6 +44,42 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
     // Funcionalidad para abrir/cerrar modales de FRIENDSHIPS
+    // Agrega esto dentro del DOMContentLoaded
+const newFriendshipForm = document.getElementById('new-friendship-form');
+if (newFriendshipForm) {
+    newFriendshipForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        fetch(this.action, {
+            method: this.method,
+            body: new FormData(this),
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload(); // O actualiza solo la sección necesaria
+            } else {
+                throw new Error(data.message || 'Error al crear el emparejamiento');
+            }
+        })
+        .catch(error => {
+            alert(error.message);
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Guardar';
+        });
+    });
+}
+
     window.openNewFriendshipModal = function() {
         document.getElementById('new-friendship-modal').classList.remove('hidden');
     };

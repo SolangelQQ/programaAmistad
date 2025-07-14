@@ -181,112 +181,112 @@ Route::middleware('auth')->group(function () {
     Route::post('/activities/{activity}/photos', [ActivityController::class, 'uploadPhotos'])->name('activities.photos.upload');
     Route::delete('/activities/{activity}/photos', [ActivityController::class, 'deletePhoto'])->name('activities.photos.delete');
 
-    Route::prefix('notifications')->name('notifications.')->group(function () {
-        // Vista principal de notificaciones
-        Route::get('/', [NotificationController::class, 'index'])->name('index');
+    // Route::prefix('notifications')->name('notifications.')->group(function () {
+    //     // Vista principal de notificaciones
+    //     Route::get('/', [NotificationController::class, 'index'])->name('index');
         
-        // API para obtener notificaciones (para el dropdown)
-        Route::get('/api', [NotificationController::class, 'getNotifications']);
+    //     // API para obtener notificaciones (para el dropdown)
+    //     Route::get('/api', [NotificationController::class, 'getNotifications']);
         
-        // API para obtener solo el conteo de no leídas
-        Route::get('/unread-count', [NotificationController::class, 'getUnreadCount']);
+    //     // API para obtener solo el conteo de no leídas
+    //     Route::get('/unread-count', [NotificationController::class, 'getUnreadCount']);
         
-        // Marcar notificación específica como leída
-        Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
+    //     // Marcar notificación específica como leída
+    //     Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
         
-        // Marcar todas las notificaciones como leídas
-        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+    //     // Marcar todas las notificaciones como leídas
+    //     Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
         
-        // Eliminar notificación específica
-        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+    //     // Eliminar notificación específica
+    //     Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
         
-        // Formulario para crear notificación personalizada (solo admins)
-        Route::get('/create', [NotificationController::class, 'create'])->name('create');
+    //     // Formulario para crear notificación personalizada (solo admins)
+    //     Route::get('/create', [NotificationController::class, 'create'])->name('create');
         
-        // Enviar notificación personalizada
-        Route::post('/send', [NotificationController::class, 'store'])->name('store');
-    });
+    //     // Enviar notificación personalizada
+    //     Route::post('/send', [NotificationController::class, 'store'])->name('store');
+    // });
 
-    Route::prefix('notifications')->name('notifications.')->group(function () {
-        Route::get('/', [NotificationController::class, 'index'])->name('index');
-        Route::get('/create', [NotificationController::class, 'create'])->name('create');
-        Route::post('/', [NotificationController::class, 'store'])->name('store');
-        Route::patch('/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
-        Route::patch('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
-        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+    // Route::prefix('notifications')->name('notifications.')->group(function () {
+    //     Route::get('/', [NotificationController::class, 'index'])->name('index');
+    //     Route::get('/create', [NotificationController::class, 'create'])->name('create');
+    //     Route::post('/', [NotificationController::class, 'store'])->name('store');
+    //     Route::patch('/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
+    //     Route::patch('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+    //     Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
         
-        // API para el componente dropdown
-        Route::get('/api', [NotificationController::class, 'apiIndex'])->name('api');
+    //     // API para el componente dropdown
+    //     Route::get('/api', [NotificationController::class, 'apiIndex'])->name('api');
         
-        // Invitación de amistad específica
-        Route::post('/friendship-invitation', [NotificationController::class, 'sendFriendshipInvitation'])->name('friendship-invitation');
-    });
+    //     // Invitación de amistad específica
+    //     Route::post('/friendship-invitation', [NotificationController::class, 'sendFriendshipInvitation'])->name('friendship-invitation');
+    // });
 
 
     // Notifications routes
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
-    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
-    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
-    Route::get('/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
+    // Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    // Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
+    // Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    // Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    // Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    // Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    // Route::get('/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
 
 
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
-    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
-    Route::put('/notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');
-    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    // Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    // Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
+    // Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+    // Route::put('/notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');
+    // Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     
-    // Rutas específicas para marcar como leídas
-    Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    // // Rutas específicas para marcar como leídas
+    // Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    // Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
     
-    // Rutas AJAX para obtener datos
-    Route::get('/api/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
-    Route::get('/api/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
+    // // Rutas AJAX para obtener datos
+    // Route::get('/api/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    // Route::get('/api/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
 
-    // Agregar esta línea en tus rutas de notificaciones
-    Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
-
-
-    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])
-        ->name('notifications.show');
+    // // Agregar esta línea en tus rutas de notificaciones
+    // Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
 
 
-//     // === RUTAS DE NOTIFICACIONES (ÚNICAS) ===
-// Route::prefix('notifications')->name('notifications.')->group(function () {
-//     // Vista principal de notificaciones
-//     Route::get('/', [NotificationController::class, 'index'])->name('index');
+    // Route::get('/notifications/{notification}', [NotificationController::class, 'show'])
+    //     ->name('notifications.show');
+
+
+    // === RUTAS DE NOTIFICACIONES (ÚNICAS) ===
+Route::prefix('notifications')->name('notifications.')->group(function () {
+    // Vista principal de notificaciones
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
     
-//     // API para obtener notificaciones (para el dropdown)
-//     Route::get('/api', [NotificationController::class, 'getNotifications'])->name('api');
+    // API para obtener notificaciones (para el dropdown)
+    Route::get('/api', [NotificationController::class, 'getNotifications'])->name('api');
     
-//     // API para obtener solo el conteo de no leídas
-//     Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
+    // API para obtener solo el conteo de no leídas
+    Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
     
-//     // Formulario para crear notificación personalizada
-//     Route::get('/create', [NotificationController::class, 'create'])->name('create');
+    // Formulario para crear notificación personalizada
+    Route::get('/create', [NotificationController::class, 'create'])->name('create');
     
-//     // Enviar notificación personalizada
-//     Route::post('/', [NotificationController::class, 'store'])->name('store');
+    // Enviar notificación personalizada
+    Route::post('/', [NotificationController::class, 'store'])->name('store');
     
-//     // Ver notificación específica
-//     Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');
+    // Ver notificación específica
+    Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');
     
-//     // Marcar notificación específica como leída
-//     Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
+    // Marcar notificación específica como leída
+    Route::post('/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
     
-//     // Marcar todas las notificaciones como leídas
-//     Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+    // Marcar todas las notificaciones como leídas
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
     
-//     // Eliminar notificación específica
-//     Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+    // Eliminar notificación específica
+    Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
     
-//     // Invitación de amistad específica
-//     Route::post('/friendship-invitation', [NotificationController::class, 'sendFriendshipInvitation'])->name('friendship-invitation');
-// });
+    // Invitación de amistad específica
+    Route::post('/friendship-invitation', [NotificationController::class, 'sendFriendshipInvitation'])->name('friendship-invitation');
+});
 
 
      // Document Management

@@ -161,13 +161,69 @@ public function show(Friendship $friendship){
             ->with('success', 'Persona registrada exitosamente.');
     }
 
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'buddy_id' => 'required|exists:buddies,id',
+    //         'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
+    //         'buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
+    //         'peer_buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
+    //         'start_date' => 'required|date',
+    //         'status' => 'required|string',
+    //         'notes' => 'nullable|string'
+    //     ]);
+
+    //     // Verificar tipos
+    //     $buddy = Buddy::findOrFail($validated['buddy_id']);
+    //     $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
+        
+    //     // CORREGIDO: Verificar que los líderes tengan los roles correctos
+    //     $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
+    //     $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
+
+    //     if ($buddy->type !== 'buddy') {
+    //         return back()->with('error', 'El Buddy seleccionado debe ser una persona con discapacidad');
+    //     }
+
+    //     if ($peerBuddy->type !== 'peer_buddy') {
+    //         return back()->with('error', 'El PeerBuddy seleccionado debe ser una persona sin discapacidad');
+    //     }
+
+    //     if (!$buddyLeader->role || $buddyLeader->role->name !== 'Líder de Buddies') {
+    //         return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de Buddies');
+    //     }
+
+    //     if (!$peerBuddyLeader->role || $peerBuddyLeader->role->name !== 'Líder de PeerBuddies') {
+    //         return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de PeerBuddies');
+    //     }
+
+    //     // Verificar relación existente
+    //     $existing = Friendship::where(function($q) use ($validated) {
+    //         $q->where('buddy_id', $validated['buddy_id'])
+    //           ->where('peer_buddy_id', $validated['peer_buddy_id']);
+    //     })->orWhere(function($q) use ($validated) {
+    //         $q->where('buddy_id', $validated['peer_buddy_id'])
+    //           ->where('peer_buddy_id', $validated['buddy_id']);
+    //     })->exists();
+
+    //     if ($existing) {
+    //         return back()->with('error', 'Esta relación de amistad ya existe');
+    //     }
+
+    //     Friendship::create($validated);
+
+    //     return redirect()->route('friendships.index')
+    //         ->with('success', 'Emparejamiento creado exitosamente');
+    // }
+
     public function store(Request $request)
-    {
+{
+    try {
         $validated = $request->validate([
             'buddy_id' => 'required|exists:buddies,id',
             'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
-            'buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
-            'peer_buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
+            'buddy_leader_id' => 'required|exists:users,id',
+            'peer_buddy_leader_id' => 'required|exists:users,id',
             'start_date' => 'required|date',
             'status' => 'required|string',
             'notes' => 'nullable|string'
@@ -177,7 +233,7 @@ public function show(Friendship $friendship){
         $buddy = Buddy::findOrFail($validated['buddy_id']);
         $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
         
-        // CORREGIDO: Verificar que los líderes tengan los roles correctos
+        // Verificar que los líderes tengan los roles correctos
         $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
         $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
 
@@ -210,13 +266,49 @@ public function show(Friendship $friendship){
             return back()->with('error', 'Esta relación de amistad ya existe');
         }
 
-        Friendship::create($validated);
+        // Crear la amistad
+        $friendship = Friendship::create($validated);
 
+        // CORRECCIÓN: Verificar si es una petición AJAX
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Emparejamiento creado exitosamente',
+                'friendship' => $friendship,
+                'redirect' => route('friendships.index')
+            ]);
+        }
+
+        // Para peticiones normales, redirigir correctamente
         return redirect()->route('friendships.index')
             ->with('success', 'Emparejamiento creado exitosamente');
-    }
 
-    
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors()
+            ], 422);
+        }
+        return back()->withErrors($e->errors())->withInput();
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Registro no encontrado: ' . $e->getMessage()
+            ], 404);
+        }
+        return back()->with('error', 'Registro no encontrado: ' . $e->getMessage());
+    } catch (\Exception $e) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor. Por favor, inténtelo nuevamente.'
+            ], 500);
+        }
+        return back()->with('error', 'Error interno del servidor. Por favor, inténtelo nuevamente.');
+    }
+}
 
     public function updateStatus(Request $request, Friendship $friendship)
     {

@@ -219,6 +219,11 @@ public function show(Friendship $friendship){
     public function store(Request $request)
 {
     try {
+        // Log para debug
+        \Log::info('Iniciando creación de amistad', [
+            'request_data' => $request->all()
+        ]);
+
         $validated = $request->validate([
             'buddy_id' => 'required|exists:buddies,id',
             'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
@@ -266,17 +271,36 @@ public function show(Friendship $friendship){
             return back()->with('error', 'Esta relación de amistad ya existe');
         }
 
-        Friendship::create($validated);
+        // Crear la amistad
+        $friendship = Friendship::create($validated);
+        
+        \Log::info('Amistad creada exitosamente', [
+            'friendship_id' => $friendship->id
+        ]);
 
-        return redirect()->route('friendships.index')
+        // CAMBIO IMPORTANTE: Usar la URL absoluta en lugar de route()
+        return redirect('/friendships')
             ->with('success', 'Emparejamiento creado exitosamente');
 
     } catch (\Illuminate\Validation\ValidationException $e) {
+        \Log::error('Error de validación en friendship store', [
+            'errors' => $e->errors(),
+            'request_data' => $request->all()
+        ]);
         return back()->withErrors($e->errors())->withInput();
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        \Log::error('Modelo no encontrado en friendship store', [
+            'error' => $e->getMessage(),
+            'request_data' => $request->all()
+        ]);
         return back()->with('error', 'Registro no encontrado: ' . $e->getMessage());
     } catch (\Exception $e) {
-        return back()->with('error', 'Error: ' . $e->getMessage());
+        \Log::error('Error general en friendship store', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'request_data' => $request->all()
+        ]);
+        return back()->with('error', 'Error interno del servidor. Por favor, inténtelo nuevamente.');
     }
 }
 

@@ -25,6 +25,118 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications', 'unreadCount', 'users'));
     }
 
+    public function getNotifications()
+    {
+        try {
+            $user = Auth::user();
+            $notifications = $user->notifications()
+                ->with('sender')
+                ->latest()
+                ->limit(10)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'notifications' => $notifications,
+                'unread_count' => $user->getUnreadNotificationsCountAttribute()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in getNotifications', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Error interno del servidor'
+            ], 500);
+        }
+    }
+
+    public function getUnreadCount()
+    {
+        try {
+            $user = Auth::user();
+            $count = $user->notifications()->whereNull('read_at')->count();
+
+            return response()->json([
+                'success' => true,
+                'unread_count' => $count
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in getUnreadCount', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Error interno del servidor'
+            ], 500);
+        }
+    }
+
+    /**
+     * MÉTODO FALTANTE: Crear vista para nueva notificación
+     */
+    public function create()
+    {
+        if (!$this->canSendNotifications()) {
+            return redirect()->route('notifications.index')
+                ->with('error', 'No tienes permisos para crear notificaciones');
+        }
+
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        return view('notifications.create', compact('users'));
+    }
+
+    /**
+     * MÉTODO FALTANTE: Enviar invitación de amistad
+     */
+    public function sendFriendshipInvitation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'buddy_id' => 'required|exists:buddies,id',
+            'peer_buddy_id' => 'required|exists:buddies,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $user = User::findOrFail($request->user_id);
+            $buddy = \App\Models\Buddy::findOrFail($request->buddy_id);
+            $peerBuddy = \App\Models\Buddy::findOrFail($request->peer_buddy_id);
+
+            $this->createNotification(
+                $user->id,
+                Auth::id(),
+                'Nueva invitación de amistad',
+                "Se ha creado una nueva amistad entre {$buddy->name} y {$peerBuddy->name}",
+                'info'
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invitación enviada exitosamente'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error sending friendship invitation', [
+                'error' => $e->getMessage(),
+                'request' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Error interno del servidor'
+            ], 500);
+        }
+    }
+
     /**
      * Store a newly created notification in storage.
      */
@@ -91,12 +203,18 @@ class NotificationController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            \Log::error('Error in notification store', [
+                'error' => $e->getMessage(),
+                'request' => $request->all()
+            ]);
+            
             return response()->json([
                 'message' => 'Error interno del servidor',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
+
 
     public function send(Request $request)
     {

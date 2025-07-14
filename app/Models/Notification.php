@@ -15,13 +15,14 @@ class Notification extends Model
         'title',
         'message',
         'type',
-        'read_at',
-        'data'
+        'data',
+        'read_at'
     ];
 
     protected $casts = [
+        // 'read_at' => 'datetime',
+        'data' => 'array',
         'read_at' => 'datetime',
-        'data' => 'array'
     ];
 
     /**
@@ -40,6 +41,7 @@ class Notification extends Model
         return $this->belongsTo(User::class, 'sender_id');
     }
 
+    
     /**
      * Scope para notificaciones no leídas
      */

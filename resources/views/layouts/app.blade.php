@@ -25,8 +25,8 @@
         }
     </script>
 
-    @vite(['resources/js/app.js'])
-    @vite(['resources/js/buddy-form.js'])
+    <!-- @vite(['resources/js/app.js'])
+    @vite(['resources/js/buddy-form.js']) -->
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
@@ -66,6 +66,28 @@
         </div>
         
     </div>
+<script>
+    // Configuración global
+    window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Configurar fetch para incluir CSRF token
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        options.headers = options.headers || {};
+        options.headers['X-CSRF-TOKEN'] = window.csrfToken;
+        options.headers['X-Requested-With'] = 'XMLHttpRequest';
+        return originalFetch(url, options);
+    };
+    
+    console.log('App inicializada');
+</script>
+
+<!-- Scripts específicos de cada página -->
+@if(isset($jsFiles))
+    @foreach($jsFiles as $jsFile)
+        <script src="{{ asset('js/' . $jsFile) }}"></script>
+    @endforeach
+@endif
 
     @stack('scripts')
 </body>

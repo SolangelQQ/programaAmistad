@@ -66,18 +66,6 @@
         
     </div>
 
-    <!-- USAR URL COMPLETA -->
-<script src="{{ url('js/friendships.js') }}" defer></script>
-<script src="{{ url('js/activity-filters.js') }}" defer></script>
-<script src="{{ url('js/activities-sidebar.js') }}" defer></script>
-<script src="{{ url('js/upcoming-activities.js') }}" defer></script>
-<script src="{{ url('js/friendshipModal.js') }}" defer></script>
-<script src="{{ url('js/follow-up.js') }}" defer></script>
-<script src="{{ url('js/general.js') }}" defer></script>
-<script src="{{ url('js/liderazgo-tab.js') }}" defer></script>
-<script src="{{ url('resources/js/buddy-form.js') }}" defer></script>
-
-
     @stack('scripts')
 </body>
 

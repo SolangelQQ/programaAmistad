@@ -25,12 +25,11 @@
         }
     </script>
 
-    <!-- @vite(['resources/js/app.js'])
-    @vite(['resources/js/buddy-form.js']) -->
+    @vite(['resources/js/app.js'])
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
-<body class="font-sans antialiased" 
+<c class="font-sans antialiased" 
       x-data="{ 
           sidebarOpen: window.innerWidth >= 768,
           sidebarExpanded: window.innerWidth >= 768
@@ -66,28 +65,18 @@
         </div>
         
     </div>
-<script>
-    // Configuración global
-    window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    // Configurar fetch para incluir CSRF token
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options = {}) {
-        options.headers = options.headers || {};
-        options.headers['X-CSRF-TOKEN'] = window.csrfToken;
-        options.headers['X-Requested-With'] = 'XMLHttpRequest';
-        return originalFetch(url, options);
-    };
-    
-    console.log('App inicializada');
-</script>
 
-<!-- Scripts específicos de cada página -->
-@if(isset($jsFiles))
-    @foreach($jsFiles as $jsFile)
-        <script src="{{ asset('js/' . $jsFile) }}"></script>
-    @endforeach
-@endif
+    <!-- USAR URL COMPLETA -->
+<script src="{{ url('js/friendships.js') }}" defer></script>
+<script src="{{ url('js/activity-filters.js') }}" defer></script>
+<script src="{{ url('js/activities-sidebar.js') }}" defer></script>
+<script src="{{ url('js/upcoming-activities.js') }}" defer></script>
+<script src="{{ url('js/friendshipModal.js') }}" defer></script>
+<script src="{{ url('js/follow-up.js') }}" defer></script>
+<script src="{{ url('js/general.js') }}" defer></script>
+<script src="{{ url('js/liderazgo-tab.js') }}" defer></script>
+<script src="{{ url('resources/js/buddy-form.js') }}" defer></script>
+
 
     @stack('scripts')
 </body>

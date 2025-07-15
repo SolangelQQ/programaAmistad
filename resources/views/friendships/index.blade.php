@@ -231,188 +231,383 @@
 });
 </script> -->
 <script>
-    // === DEBUGGING Y MANEJO DE ERRORES MEJORADO ===
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Sistema de emparejamientos iniciado');
+    document.addEventListener('DOMContentLoaded', function() {
+    console.log('Friendship system initialized');
     
-    // Función para mostrar mensajes de error más detallados
-    window.showErrorMessage = function(message, details = null) {
-        console.error('❌ Error:', message);
-        if (details) {
-            console.error('📋 Detalles:', details);
+    // === FUNCIONES PARA MODALES DE EMPAREJAMIENTO ===
+    
+    // Abrir modal de nuevo emparejamiento
+    window.openNewFriendshipModal = function() {
+        const modal = document.getElementById('new-friendship-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            console.log('Modal de nuevo emparejamiento abierto');
+        } else {
+            console.error('Modal new-friendship-modal no encontrado');
+        }
+    };
+    
+    // Cerrar modal de nuevo emparejamiento
+    window.closeNewFriendshipModal = function() {
+        const modal = document.getElementById('new-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            console.log('Modal de nuevo emparejamiento cerrado');
+        }
+    };
+    
+    // Ver detalles del emparejamiento
+    window.viewFriendshipDetails = function(friendshipId) {
+        console.log('Viendo detalles del emparejamiento:', friendshipId);
+        
+        fetch(`/friendships/${friendshipId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Datos del emparejamiento recibidos:', data);
+                
+                // Actualizar información del emparejamiento
+                const setTextContent = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value;
+                    } else {
+                        console.warn(`Elemento ${id} no encontrado`);
+                    }
+                };
+                
+                setTextContent('view_friendship_id', data.friendship.id);
+                setTextContent('view_start_date', data.friendship.start_date);
+                setTextContent('view_end_date', data.friendship.end_date || 'N/A');
+                setTextContent('view_notes', data.friendship.notes || 'Sin notas');
+                
+                // Actualizar badge de status
+                const statusBadge = document.getElementById('view_status_badge');
+                if (statusBadge) {
+                    statusBadge.textContent = data.friendship.status;
+                    // Limpiar clases anteriores
+                    statusBadge.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-yellow-100', 'text-yellow-800');
+                    
+                    // Aplicar clases según el status
+                    if (data.friendship.status === 'Emparejado') {
+                        statusBadge.classList.add('bg-green-100', 'text-green-800');
+                    } else if (data.friendship.status === 'Inactivo') {
+                        statusBadge.classList.add('bg-red-100', 'text-red-800');
+                    } else {
+                        statusBadge.classList.add('bg-yellow-100', 'text-yellow-800');
+                    }
+                }
+                
+                // Actualizar información del buddy
+                setTextContent('view_buddy_name', `${data.buddy.first_name} ${data.buddy.last_name}`);
+                setTextContent('view_buddy_disability', data.buddy.disability || 'N/A');
+                setTextContent('view_buddy_age', `${data.buddy.age} años`);
+                setTextContent('view_buddy_ci', data.buddy.ci);
+                setTextContent('view_buddy_phone', data.buddy.phone);
+                setTextContent('view_buddy_email', data.buddy.email || 'N/A');
+                setTextContent('view_buddy_address', data.buddy.address);
+                
+                // Actualizar información del peerbuddy
+                setTextContent('view_peerbuddy_name', `${data.peerBuddy.first_name} ${data.peerBuddy.last_name}`);
+                setTextContent('view_peerbuddy_age', `${data.peerBuddy.age} años`);
+                setTextContent('view_peerbuddy_ci', data.peerBuddy.ci);
+                setTextContent('view_peerbuddy_phone', data.peerBuddy.phone);
+                setTextContent('view_peerbuddy_email', data.peerBuddy.email || 'N/A');
+                setTextContent('view_peerbuddy_address', data.peerBuddy.address);
+                
+                // Mostrar modal
+                const viewModal = document.getElementById('view-friendship-modal');
+                if (viewModal) {
+                    viewModal.classList.remove('hidden');
+                } else {
+                    console.error('Modal view-friendship-modal no encontrado');
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar los datos del emparejamiento:', error);
+                alert('Error al cargar los datos del emparejamiento');
+            });
+    };
+    
+    // Cerrar modal de ver emparejamiento
+    window.closeViewFriendshipModal = function() {
+        const modal = document.getElementById('view-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    // Abrir modal de editar emparejamiento
+    window.openEditFriendshipModal = function(friendshipId, startDate, endDate, status, notes, buddyLeaderId, peerBuddyLeaderId) {
+        const form = document.getElementById('edit-friendship-form');
+        if (form) {
+            form.action = `/friendships/${friendshipId}`;
         }
         
-        // Crear notificación visual
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-                <span>${message}</span>
-            </div>
-        `;
+        const setFieldValue = (id, value) => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.value = value || '';
+            } else {
+                console.warn(`Campo ${id} no encontrado`);
+            }
+        };
         
-        document.body.appendChild(notification);
+        setFieldValue('edit_start_date', startDate);
+        setFieldValue('edit_end_date', endDate);
+        setFieldValue('edit_status', status);
+        setFieldValue('edit_notes', notes);
+        setFieldValue('edit_buddy_leader_id', buddyLeaderId);
+        setFieldValue('edit_peer_buddy_leader_id', peerBuddyLeaderId);
         
-        // Remover después de 5 segundos
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
+        const editModal = document.getElementById('edit-friendship-modal');
+        if (editModal) {
+            editModal.classList.remove('hidden');
+        } else {
+            console.error('Modal edit-friendship-modal no encontrado');
+        }
     };
     
-    // Función para mostrar mensajes de éxito
-    window.showSuccessMessage = function(message) {
-        console.log('✅ Éxito:', message);
-        
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
+    // Cerrar modal de editar emparejamiento
+    window.closeEditFriendshipModal = function() {
+        const modal = document.getElementById('edit-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
     };
     
-    // === VALIDACIÓN Y ENVÍO DEL FORMULARIO CON AJAX ===
+    // Confirmar eliminación de emparejamiento
+    window.confirmDelete = function(friendshipId) {
+        const form = document.getElementById('delete-friendship-form');
+        if (form) {
+            form.action = `/friendships/${friendshipId}`;
+        }
+        
+        const deleteModal = document.getElementById('delete-confirmation-modal');
+        if (deleteModal) {
+            deleteModal.classList.remove('hidden');
+        } else {
+            console.error('Modal delete-confirmation-modal no encontrado');
+        }
+    };
+    
+    // Cerrar modal de eliminar
+    window.closeDeleteModal = function() {
+        const modal = document.getElementById('delete-confirmation-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    // === VALIDACIÓN DEL FORMULARIO DE NUEVO EMPAREJAMIENTO ===
     
     const newFriendshipForm = document.getElementById('new-friendship-form');
     if (newFriendshipForm) {
-        console.log('📋 Formulario de emparejamiento encontrado');
-        
         newFriendshipForm.addEventListener('submit', function(e) {
             e.preventDefault(); // Prevenir envío normal
+            console.log('📝 Formulario de nuevo emparejamiento enviado');
             
-            console.log('📤 Enviando formulario de emparejamiento...');
+            const buddyId = document.getElementById('buddy_id')?.value;
+            const peerBuddyId = document.getElementById('peer_buddy_id')?.value;
             
-            // Obtener datos del formulario
-            const formData = new FormData(this);
-            const buddyId = formData.get('buddy_id');
-            const peerBuddyId = formData.get('peer_buddy_id');
-            const startDate = formData.get('start_date');
+            console.log('👤 Buddy ID:', buddyId);
+            console.log('🤝 PeerBuddy ID:', peerBuddyId);
             
-            console.log('📊 Datos del formulario:', {
-                buddy_id: buddyId,
-                peer_buddy_id: peerBuddyId,
-                start_date: startDate,
-                end_date: formData.get('end_date'),
-                status: formData.get('status'),
-                notes: formData.get('notes'),
-                buddy_leader_id: formData.get('buddy_leader_id'),
-                peer_buddy_leader_id: formData.get('peer_buddy_leader_id')
-            });
-            
-            // Validaciones básicas
-            if (!buddyId || !peerBuddyId || !startDate) {
-                showErrorMessage('Por favor completa todos los campos requeridos');
-                return;
+            // Validar que ambos campos estén seleccionados
+            if (!buddyId || !peerBuddyId) {
+                alert('Por favor selecciona un Buddy y un PeerBuddy');
+                return false;
             }
             
+            // Validar que no sean el mismo
             if (buddyId === peerBuddyId) {
-                showErrorMessage('No puedes emparejar una persona consigo misma');
-                return;
+                alert('No puedes emparejar una persona consigo misma');
+                return false;
             }
             
-            // Deshabilitar botón de envío
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalText = submitButton.textContent;
-            submitButton.disabled = true;
-            submitButton.textContent = 'Creando...';
+            // Validar fecha de inicio
+            const startDate = document.getElementById('start_date')?.value;
+            if (!startDate) {
+                alert('Por favor selecciona una fecha de inicio');
+                return false;
+            }
             
-            // Obtener token CSRF
+            // Recopilar todos los datos del formulario
+            const formData = new FormData(newFriendshipForm);
+            const formObject = {};
+            
+            // Convertir FormData a objeto para logging
+            for (let [key, value] of formData.entries()) {
+                formObject[key] = value;
+            }
+            
+            console.log('📋 Datos del formulario:', formObject);
+            
+            // Obtener CSRF token
             const csrfToken = document.querySelector('meta[name="csrf-token"]');
             if (!csrfToken) {
-                showErrorMessage('Token CSRF no encontrado');
-                submitButton.disabled = false;
-                submitButton.textContent = originalText;
-                return;
+                console.error('❌ CSRF token no encontrado');
+                alert('Error: Token CSRF no encontrado');
+                return false;
             }
             
-            // Enviar con AJAX
-            fetch(this.action, {
+            console.log('🔐 CSRF Token encontrado:', csrfToken.getAttribute('content').substring(0, 10) + '...');
+            
+            // Configurar headers
+            const headers = {
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            
+            console.log('🚀 Enviando solicitud a:', newFriendshipForm.action);
+            console.log('📡 Headers:', headers);
+            
+            // Enviar con fetch
+            fetch(newFriendshipForm.action, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: headers
             })
             .then(response => {
-                console.log('📨 Respuesta recibida:', response.status);
+                console.log('📥 Respuesta recibida. Status:', response.status);
+                console.log('📊 Response OK:', response.ok);
                 
                 if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message || `Error HTTP: ${response.status}`);
+                    return response.text().then(text => {
+                        console.error('❌ Error en respuesta:', text);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     });
                 }
                 
-                return response.json();
+                const contentType = response.headers.get('content-type');
+                console.log('📄 Content-Type:', contentType);
+                
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    return response.text();
+                }
             })
             .then(data => {
                 console.log('✅ Respuesta exitosa:', data);
                 
-                if (data.success) {
-                    showSuccessMessage('Emparejamiento creado exitosamente');
-                    closeNewFriendshipModal();
-                    
-                    // Limpiar formulario
-                    this.reset();
-                    
-                    // Recargar página después de un momento
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                // Cerrar modal
+                window.closeNewFriendshipModal();
+                
+                // Mostrar mensaje de éxito
+                if (typeof data === 'object' && data.message) {
+                    alert(data.message);
                 } else {
-                    showErrorMessage(data.message || 'Error desconocido');
+                    alert('Emparejamiento creado exitosamente');
                 }
+                
+                // Recargar página o actualizar contenido
+                location.reload();
             })
             .catch(error => {
                 console.error('💥 Error en la solicitud:', error);
-                showErrorMessage('Error al crear el emparejamiento', error.message);
-            })
-            .finally(() => {
-                // Rehabilitar botón
-                submitButton.disabled = false;
-                submitButton.textContent = originalText;
+                console.error('❌ Error:', 'Error al crear el emparejamiento');
+                console.error('📋 Detalles:', error.message);
+                
+                // Mostrar error más específico
+                if (error.message.includes('Failed to fetch') || error.message.includes('Load failed')) {
+                    alert('Error de conexión: Verifica tu conexión a internet y que el servidor esté funcionando');
+                } else if (error.message.includes('404')) {
+                    alert('Error 404: La ruta no existe. Verifica la URL en el formulario');
+                } else if (error.message.includes('422')) {
+                    alert('Error de validación: Algunos datos no son válidos');
+                } else if (error.message.includes('500')) {
+                    alert('Error del servidor: Revisa los logs del servidor');
+                } else {
+                    alert('Error al crear el emparejamiento: ' + error.message);
+                }
             });
         });
     } else {
         console.error('❌ Formulario new-friendship-form no encontrado');
     }
     
-    // === FUNCIONES PARA MODALES ===
+    // === FUNCIONES PARA TABS ===
     
-    window.openNewFriendshipModal = function() {
-        const modal = document.getElementById('new-friendship-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            console.log('🔓 Modal de nuevo emparejamiento abierto');
+    const switchToTab = function(targetSectionId) {
+        console.log('Cambiando a tab:', targetSectionId);
+        
+        const allSections = ['friendships-section', 'activities-section', 'buddies-section'];
+        
+        // Ocultar todas las secciones
+        allSections.forEach(sectionId => {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.add('hidden');
+            }
+        });
+        
+        // Mostrar la sección objetivo
+        const targetSection = document.getElementById(targetSectionId);
+        if (targetSection) {
+            targetSection.classList.remove('hidden');
+            console.log('Sección mostrada:', targetSectionId);
         } else {
-            console.error('❌ Modal new-friendship-modal no encontrado');
+            console.error('Sección no encontrada:', targetSectionId);
+        }
+        
+        // Actualizar estilos de tabs
+        document.querySelectorAll('.tab-link').forEach(tab => {
+            tab.classList.remove('border-indigo-500', 'text-gray-900');
+            tab.classList.add('border-transparent', 'text-gray-500');
+        });
+        
+        const activeTab = document.querySelector(`[data-target="${targetSectionId}"]`);
+        if (activeTab) {
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-indigo-500', 'text-gray-900');
         }
     };
     
-    window.closeNewFriendshipModal = function() {
-        const modal = document.getElementById('new-friendship-modal');
+    // Event listeners para tabs
+    document.querySelectorAll('.tab-link').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            console.log('Tab clickeado, objetivo:', targetId);
+            switchToTab(targetId);
+        });
+    });
+    
+    // Activar tab inicial
+    setTimeout(() => {
+        switchToTab('friendships-section');
+    }, 100);
+    
+    // === FUNCIONES PARA CERRAR MODALES AL HACER CLICK FUERA ===
+    
+    // Cerrar modales al hacer click fuera de ellos
+    const modalIds = [
+        'new-friendship-modal',
+        'view-friendship-modal', 
+        'edit-friendship-modal',
+        'delete-confirmation-modal'
+    ];
+    
+    modalIds.forEach(modalId => {
+        const modal = document.getElementById(modalId);
         if (modal) {
-            modal.classList.add('hidden');
-            console.log('🔒 Modal de nuevo emparejamiento cerrado');
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
         }
-    };
+    });
     
-    // === VERIFICACIÓN DE ELEMENTOS ===
+    // === DEBUGGING Y VERIFICACIÓN ===
     
+    // Verificar que todos los elementos necesarios existan
     const requiredElements = [
         'new-friendship-modal',
         'new-friendship-form',
@@ -421,30 +616,70 @@ document.addEventListener('DOMContentLoaded', function() {
         'start_date'
     ];
     
-    console.log('🔍 Verificando elementos requeridos:');
+    const optionalElements = [
+        'buddy_leader_id',
+        'peer_buddy_leader_id', 
+        'notes',
+        'status',
+        'end_date'
+    ];
+    
     requiredElements.forEach(elementId => {
         const element = document.getElementById(elementId);
         if (!element) {
-            console.error(`❌ Elemento requerido no encontrado: ${elementId}`);
+            console.error(`Elemento requerido no encontrado: ${elementId}`);
         } else {
-            console.log(`✅ Elemento encontrado: ${elementId}`);
+            console.log(`Elemento encontrado: ${elementId}`);
         }
     });
     
-    // Verificar meta CSRF
-    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-    if (!csrfMeta) {
-        console.error('❌ Meta tag CSRF no encontrado');
-        showErrorMessage('Error de seguridad: Token CSRF no encontrado');
-    } else {
-        console.log('✅ Token CSRF encontrado');
-    }
+    optionalElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            console.log(`Elemento opcional encontrado: ${elementId}`);
+        } else {
+            console.warn(`Elemento opcional no encontrado: ${elementId}`);
+        }
+    });
     
-    console.log('🎉 Inicialización completada');
+    console.log('Inicialización de emparejamientos completada');
+    
+    // === FUNCIONES DE DEBUGGING ADICIONALES ===
+    
+    // Función para mostrar mensajes de error más detallados
+    window.showErrorMessage = function(message, details = null) {
+        console.error('❌ Error:', message);
+        if (details) {
+            console.error('📋 Detalles:', details);
+        }
+    };
+    
+    // Verificar configuración del servidor
+    window.checkServerConfig = function() {
+        console.log('🔍 Verificando configuración...');
+        console.log('🌐 URL actual:', window.location.href);
+        console.log('🔗 Base URL:', window.location.origin);
+        
+        const form = document.getElementById('new-friendship-form');
+        if (form) {
+            console.log('📝 Action del formulario:', form.action);
+            console.log('🔧 Método del formulario:', form.method);
+        }
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            console.log('🔐 CSRF Token presente:', csrfToken.getAttribute('content').substring(0, 20) + '...');
+        } else {
+            console.error('❌ CSRF Token no encontrado en el HEAD');
+        }
+    };
+    
+    // Ejecutar verificación automática
+    window.checkServerConfig();
 });
 </script>
 <!-- <script src="{{ asset('js/buddies.js') }}"></script> -->
- <script>
+ <!-- <script>
     // Función para ver detalles 
 function viewBuddyDetails(buddyId) {
     
@@ -804,5 +1039,5 @@ window.closeViewDetailsModal = closeViewDetailsModal;
 window.closeEditBuddyModal = closeEditBuddyModal;
 window.closeDeleteBuddyModal = closeDeleteBuddyModal;
 window.toggleEditTypeFields = toggleEditTypeFields;
- </script>
+ </script> -->
 @endsection

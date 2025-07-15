@@ -1,5 +1,5 @@
 <!-- Modal para ver detalles del Emparejamiento -->
-<div id="view-friendship-modal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+<!-- <div id="view-friendship-modal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-lg shadow-xl p-6 max-w-6xl max-h-[90vh] overflow-y-auto">
         <div id="modal-content">
             
@@ -22,7 +22,7 @@
             
         </div>
     </div>
-</div>
+</div> -->
 
 <!-- <script src="{{ asset('js/friendshipModal.js') }}"></script> -->
 <script>

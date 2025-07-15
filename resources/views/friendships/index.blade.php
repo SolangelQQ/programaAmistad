@@ -41,7 +41,7 @@
 
 <!-- Include the fixed JS file -->
 <!-- <script src="{{ asset('js/friendships.js') }}"></script> -->
-<script>
+<!-- <script>
     document.addEventListener('DOMContentLoaded', function() {
     // Funcionalidad para abrir/cerrar modales de FRIENDSHIPS
     
@@ -229,8 +229,369 @@
         });
     }
 });
+</script> -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Sistema de emparejamientos inicializado');
+    
+    // === CONFIGURACIÓN DE DEBUGGING ===
+    const DEBUG_MODE = true;
+    
+    function debugLog(message, data = null) {
+        if (DEBUG_MODE) {
+            console.log(`🔍 [DEBUG] ${message}`, data || '');
+        }
+    }
+    
+    function errorLog(message, error = null) {
+        console.error(`❌ [ERROR] ${message}`, error || '');
+    }
+    
+    // === FUNCIONES PARA MODALES DE EMPAREJAMIENTO ===
+    
+    // Abrir modal de nuevo emparejamiento
+    window.openNewFriendshipModal = function() {
+        const modal = document.getElementById('new-friendship-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            debugLog('Modal de nuevo emparejamiento abierto');
+        } else {
+            errorLog('Modal new-friendship-modal no encontrado');
+        }
+    };
+    
+    // Cerrar modal de nuevo emparejamiento
+    window.closeNewFriendshipModal = function() {
+        const modal = document.getElementById('new-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            debugLog('Modal de nuevo emparejamiento cerrado');
+        }
+    };
+    
+    // === FUNCIÓN DE ENVÍO DE FORMULARIO CON DEBUGGING MEJORADO ===
+    
+    const newFriendshipForm = document.getElementById('new-friendship-form');
+    if (newFriendshipForm) {
+        debugLog('Formulario de nuevo emparejamiento encontrado');
+        
+        newFriendshipForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevenir envío normal para debugging
+            
+            debugLog('📝 Formulario de nuevo emparejamiento enviado');
+            
+            // Recopilar datos del formulario
+            const formData = new FormData(this);
+            const buddyId = formData.get('buddy_id');
+            const peerBuddyId = formData.get('peer_buddy_id');
+            const startDate = formData.get('start_date');
+            const endDate = formData.get('end_date');
+            const status = formData.get('status');
+            const notes = formData.get('notes');
+            const buddyLeaderId = formData.get('buddy_leader_id');
+            const peerBuddyLeaderId = formData.get('peer_buddy_leader_id');
+            
+            debugLog('Datos del formulario recopilados:', {
+                buddyId,
+                peerBuddyId,
+                startDate,
+                endDate,
+                status,
+                notes,
+                buddyLeaderId,
+                peerBuddyLeaderId
+            });
+            
+            // Validaciones
+            if (!buddyId || !peerBuddyId) {
+                errorLog('Faltan buddy_id o peer_buddy_id');
+                alert('Por favor selecciona un Buddy y un PeerBuddy');
+                return false;
+            }
+            
+            if (buddyId === peerBuddyId) {
+                errorLog('buddy_id y peer_buddy_id son iguales');
+                alert('No puedes emparejar una persona consigo misma');
+                return false;
+            }
+            
+            if (!startDate) {
+                errorLog('Falta start_date');
+                alert('Por favor selecciona una fecha de inicio');
+                return false;
+            }
+            
+            debugLog('✅ Validaciones pasadas, enviando datos...');
+            
+            // Verificar CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                errorLog('CSRF token no encontrado');
+                alert('Error de seguridad: Token CSRF no encontrado');
+                return false;
+            }
+            
+            debugLog('CSRF token encontrado:', csrfToken.getAttribute('content'));
+            
+            // Preparar headers
+            const headers = {
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            };
+            
+            debugLog('Headers preparados:', headers);
+            
+            // Verificar la URL de acción
+            const actionUrl = this.action || '/friendships';
+            debugLog('URL de acción:', actionUrl);
+            
+            // Verificar conectividad básica
+            debugLog('🌐 Verificando conectividad...');
+            
+            // Enviar con fetch para mejor manejo de errores
+            fetch(actionUrl, {
+                method: 'POST',
+                body: formData,
+                headers: headers
+            })
+            .then(response => {
+                debugLog('📡 Respuesta recibida:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    url: response.url
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Verificar tipo de contenido
+                const contentType = response.headers.get('content-type');
+                debugLog('Tipo de contenido:', contentType);
+                
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    return response.text();
+                }
+            })
+            .then(data => {
+                debugLog('✅ Respuesta exitosa:', data);
+                
+                if (typeof data === 'object' && data.success) {
+                    debugLog('Emparejamiento creado exitosamente');
+                    window.closeNewFriendshipModal();
+                    
+                    // Mostrar mensaje de éxito
+                    alert('Emparejamiento creado exitosamente');
+                    
+                    // Recargar la página o actualizar la tabla
+                    location.reload();
+                } else if (typeof data === 'string' && data.includes('success')) {
+                    debugLog('Respuesta HTML recibida - probablemente exitosa');
+                    window.closeNewFriendshipModal();
+                    location.reload();
+                } else {
+                    errorLog('Respuesta inesperada:', data);
+                    alert('Error: Respuesta inesperada del servidor');
+                }
+            })
+            .catch(error => {
+                errorLog('💥 Error en la solicitud:', error);
+                
+                // Diagnóstico detallado del error
+                if (error.name === 'TypeError' && error.message.includes('Load failed')) {
+                    errorLog('🔍 Diagnóstico: Error de conectividad');
+                    alert('❌ Error de conexión:\n\n' +
+                          '• Verifica tu conexión a internet\n' +
+                          '• Comprueba que el servidor Laravel esté funcionando\n' +
+                          '• Revisa si hay errores en el servidor (logs de Laravel)\n' +
+                          '• Verifica la URL de la ruta en web.php');
+                } else if (error.message.includes('CSRF')) {
+                    errorLog('🔍 Diagnóstico: Error de CSRF');
+                    alert('❌ Error de seguridad CSRF:\n\n' +
+                          '• Recarga la página\n' +
+                          '• Verifica que el token CSRF esté configurado correctamente');
+                } else if (error.message.includes('404')) {
+                    errorLog('🔍 Diagnóstico: Ruta no encontrada');
+                    alert('❌ Error 404:\n\n' +
+                          '• Verifica que la ruta POST /friendships exista en web.php\n' +
+                          '• Comprueba el controlador FriendshipController');
+                } else if (error.message.includes('500')) {
+                    errorLog('🔍 Diagnóstico: Error del servidor');
+                    alert('❌ Error del servidor:\n\n' +
+                          '• Revisa los logs de Laravel\n' +
+                          '• Verifica la base de datos\n' +
+                          '• Comprueba el controlador');
+                } else {
+                    errorLog('🔍 Error desconocido:', error.message);
+                    alert('❌ Error desconocido:\n\n' + error.message);
+                }
+            });
+        });
+    } else {
+        errorLog('❌ Formulario new-friendship-form no encontrado');
+    }
+    
+    // === FUNCIONES ADICIONALES (Ver detalles, editar, eliminar) ===
+    
+    // Ver detalles del emparejamiento
+    window.viewFriendshipDetails = function(friendshipId) {
+        debugLog('🔍 Viendo detalles del emparejamiento:', friendshipId);
+        
+        fetch(`/friendships/${friendshipId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            debugLog('📡 Respuesta de detalles:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            debugLog('✅ Datos del emparejamiento:', data);
+            
+            // Actualizar modal con datos
+            const setTextContent = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                } else {
+                    debugLog(`⚠️ Elemento ${id} no encontrado`);
+                }
+            };
+            
+            setTextContent('view_friendship_id', data.friendship.id);
+            setTextContent('view_start_date', data.friendship.start_date);
+            setTextContent('view_end_date', data.friendship.end_date || 'N/A');
+            setTextContent('view_notes', data.friendship.notes || 'Sin notas');
+            
+            // Actualizar badge de status
+            const statusBadge = document.getElementById('view_status_badge');
+            if (statusBadge) {
+                statusBadge.textContent = data.friendship.status;
+                statusBadge.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-yellow-100', 'text-yellow-800');
+                
+                if (data.friendship.status === 'Emparejado') {
+                    statusBadge.classList.add('bg-green-100', 'text-green-800');
+                } else if (data.friendship.status === 'Inactivo') {
+                    statusBadge.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    statusBadge.classList.add('bg-yellow-100', 'text-yellow-800');
+                }
+            }
+            
+            // Actualizar información del buddy
+            setTextContent('view_buddy_name', `${data.buddy.first_name} ${data.buddy.last_name}`);
+            setTextContent('view_buddy_disability', data.buddy.disability || 'N/A');
+            setTextContent('view_buddy_age', `${data.buddy.age} años`);
+            setTextContent('view_buddy_ci', data.buddy.ci);
+            setTextContent('view_buddy_phone', data.buddy.phone);
+            setTextContent('view_buddy_email', data.buddy.email || 'N/A');
+            setTextContent('view_buddy_address', data.buddy.address);
+            
+            // Actualizar información del peerbuddy
+            setTextContent('view_peerbuddy_name', `${data.peerBuddy.first_name} ${data.peerBuddy.last_name}`);
+            setTextContent('view_peerbuddy_age', `${data.peerBuddy.age} años`);
+            setTextContent('view_peerbuddy_ci', data.peerBuddy.ci);
+            setTextContent('view_peerbuddy_phone', data.peerBuddy.phone);
+            setTextContent('view_peerbuddy_email', data.peerBuddy.email || 'N/A');
+            setTextContent('view_peerbuddy_address', data.peerBuddy.address);
+            
+            // Mostrar modal
+            const viewModal = document.getElementById('view-friendship-modal');
+            if (viewModal) {
+                viewModal.classList.remove('hidden');
+            } else {
+                errorLog('Modal view-friendship-modal no encontrado');
+            }
+        })
+        .catch(error => {
+            errorLog('💥 Error al cargar detalles:', error);
+            alert('Error al cargar los datos del emparejamiento');
+        });
+    };
+    
+    // Cerrar modal de ver emparejamiento
+    window.closeViewFriendshipModal = function() {
+        const modal = document.getElementById('view-friendship-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    // === VERIFICACIÓN DE ELEMENTOS REQUERIDOS ===
+    
+    const requiredElements = [
+        'new-friendship-modal',
+        'new-friendship-form'
+    ];
+    
+    const formFields = [
+        'buddy_id',
+        'peer_buddy_id',
+        'start_date',
+        'end_date',
+        'status',
+        'notes',
+        'buddy_leader_id',
+        'peer_buddy_leader_id'
+    ];
+    
+    debugLog('🔍 Verificando elementos requeridos...');
+    requiredElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            errorLog(`❌ Elemento requerido no encontrado: ${elementId}`);
+        } else {
+            debugLog(`✅ Elemento encontrado: ${elementId}`);
+        }
+    });
+    
+    debugLog('🔍 Verificando campos del formulario...');
+    formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            debugLog(`✅ Campo encontrado: ${fieldId}`);
+        } else {
+            debugLog(`⚠️ Campo no encontrado: ${fieldId}`);
+        }
+    });
+    
+    // === VERIFICACIÓN DE CONFIGURACIÓN ===
+    
+    // Verificar CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+        debugLog('✅ CSRF token encontrado');
+    } else {
+        errorLog('❌ CSRF token no encontrado - agrega <meta name="csrf-token" content="{{ csrf_token() }}"> en el head');
+    }
+    
+    // Verificar conectividad básica
+    debugLog('🌐 Verificando conectividad básica...');
+    fetch('/csrf-token', { method: 'GET' })
+        .then(response => {
+            if (response.ok) {
+                debugLog('✅ Conectividad básica OK');
+            } else {
+                debugLog('⚠️ Conectividad básica: respuesta no OK');
+            }
+        })
+        .catch(error => {
+            errorLog('❌ Sin conectividad básica:', error.message);
+        });
+    
+    debugLog('🏁 Inicialización completada');
+});
 </script>
-
 <!-- <script src="{{ asset('js/buddies.js') }}"></script> -->
  <!-- <script>
     // Función para ver detalles 

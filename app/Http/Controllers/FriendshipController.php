@@ -161,144 +161,144 @@ public function show(Friendship $friendship){
             ->with('success', 'Persona registrada exitosamente.');
     }
 
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'buddy_id' => 'required|exists:buddies,id',
-    //         'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
-    //         'buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
-    //         'peer_buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
-    //         'start_date' => 'required|date',
-    //         'status' => 'required|string',
-    //         'notes' => 'nullable|string'
-    //     ]);
-
-    //     // Verificar tipos
-    //     $buddy = Buddy::findOrFail($validated['buddy_id']);
-    //     $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
-        
-    //     // CORREGIDO: Verificar que los líderes tengan los roles correctos
-    //     $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
-    //     $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
-
-    //     if ($buddy->type !== 'buddy') {
-    //         return back()->with('error', 'El Buddy seleccionado debe ser una persona con discapacidad');
-    //     }
-
-    //     if ($peerBuddy->type !== 'peer_buddy') {
-    //         return back()->with('error', 'El PeerBuddy seleccionado debe ser una persona sin discapacidad');
-    //     }
-
-    //     if (!$buddyLeader->role || $buddyLeader->role->name !== 'Líder de Buddies') {
-    //         return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de Buddies');
-    //     }
-
-    //     if (!$peerBuddyLeader->role || $peerBuddyLeader->role->name !== 'Líder de PeerBuddies') {
-    //         return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de PeerBuddies');
-    //     }
-
-    //     // Verificar relación existente
-    //     $existing = Friendship::where(function($q) use ($validated) {
-    //         $q->where('buddy_id', $validated['buddy_id'])
-    //           ->where('peer_buddy_id', $validated['peer_buddy_id']);
-    //     })->orWhere(function($q) use ($validated) {
-    //         $q->where('buddy_id', $validated['peer_buddy_id'])
-    //           ->where('peer_buddy_id', $validated['buddy_id']);
-    //     })->exists();
-
-    //     if ($existing) {
-    //         return back()->with('error', 'Esta relación de amistad ya existe');
-    //     }
-
-    //     Friendship::create($validated);
-
-    //     return redirect()->route('friendships.index')
-    //         ->with('success', 'Emparejamiento creado exitosamente');
-    // }
-
-    // FriendshipController.php
-public function store(Request $request)
-{
-    try {
-        \Log::info('Creando emparejamiento', $request->all());
-        
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'buddy_id' => 'required|exists:buddies,id',
             'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
+            'buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
+            'peer_buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
             'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'status' => 'nullable|in:Emparejado,Inactivo,Pendiente',
-            'buddy_leader_id' => 'nullable|exists:users,id',
-            'peer_buddy_leader_id' => 'nullable|exists:users,id',
-            'notes' => 'nullable|string|max:1000'
+            'status' => 'required|string',
+            'notes' => 'nullable|string'
         ]);
 
-        // Verificar que no exista un emparejamiento activo
-        $existingFriendship = Friendship::where(function($query) use ($validated) {
-            $query->where('buddy_id', $validated['buddy_id'])
-                  ->orWhere('peer_buddy_id', $validated['buddy_id'])
-                  ->orWhere('buddy_id', $validated['peer_buddy_id'])
-                  ->orWhere('peer_buddy_id', $validated['peer_buddy_id']);
-        })
-        ->where('status', 'Emparejado')
-        ->first();
-
-        if ($existingFriendship) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Una o ambas personas ya tienen un emparejamiento activo'
-                ], 400);
-            }
-            return redirect()->back()->withErrors(['error' => 'Una o ambas personas ya tienen un emparejamiento activo']);
-        }
-
-        // Establecer status por defecto
-        $validated['status'] = $validated['status'] ?? 'Emparejado';
-
-        $friendship = Friendship::create($validated);
-
-        \Log::info('Emparejamiento creado exitosamente', ['friendship_id' => $friendship->id]);
-
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Emparejamiento creado exitosamente',
-                'friendship' => $friendship
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Emparejamiento creado exitosamente');
-
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        \Log::error('Error de validación', ['errors' => $e->errors()]);
+        // Verificar tipos
+        $buddy = Buddy::findOrFail($validated['buddy_id']);
+        $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
         
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $e->errors()
-            ], 422);
-        }
-        
-        return redirect()->back()->withErrors($e->errors())->withInput();
-        
-    } catch (\Exception $e) {
-        \Log::error('Error al crear emparejamiento', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
+        // CORREGIDO: Verificar que los líderes tengan los roles correctos
+        $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
+        $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
 
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error interno del servidor: ' . $e->getMessage()
-            ], 500);
+        if ($buddy->type !== 'buddy') {
+            return back()->with('error', 'El Buddy seleccionado debe ser una persona con discapacidad');
         }
 
-        return redirect()->back()->with('error', 'Error al crear el emparejamiento: ' . $e->getMessage());
+        if ($peerBuddy->type !== 'peer_buddy') {
+            return back()->with('error', 'El PeerBuddy seleccionado debe ser una persona sin discapacidad');
+        }
+
+        if (!$buddyLeader->role || $buddyLeader->role->name !== 'Líder de Buddies') {
+            return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de Buddies');
+        }
+
+        if (!$peerBuddyLeader->role || $peerBuddyLeader->role->name !== 'Líder de PeerBuddies') {
+            return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de PeerBuddies');
+        }
+
+        // Verificar relación existente
+        $existing = Friendship::where(function($q) use ($validated) {
+            $q->where('buddy_id', $validated['buddy_id'])
+              ->where('peer_buddy_id', $validated['peer_buddy_id']);
+        })->orWhere(function($q) use ($validated) {
+            $q->where('buddy_id', $validated['peer_buddy_id'])
+              ->where('peer_buddy_id', $validated['buddy_id']);
+        })->exists();
+
+        if ($existing) {
+            return back()->with('error', 'Esta relación de amistad ya existe');
+        }
+
+        Friendship::create($validated);
+
+        return redirect()->route('friendships.index')
+            ->with('success', 'Emparejamiento creado exitosamente');
     }
-}
+
+    // FriendshipController.php
+// public function store(Request $request)
+// {
+//     try {
+//         \Log::info('Creando emparejamiento', $request->all());
+        
+//         $validated = $request->validate([
+//             'buddy_id' => 'required|exists:buddies,id',
+//             'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
+//             'start_date' => 'required|date',
+//             'end_date' => 'nullable|date|after:start_date',
+//             'status' => 'nullable|in:Emparejado,Inactivo,Pendiente',
+//             'buddy_leader_id' => 'nullable|exists:users,id',
+//             'peer_buddy_leader_id' => 'nullable|exists:users,id',
+//             'notes' => 'nullable|string|max:1000'
+//         ]);
+
+//         // Verificar que no exista un emparejamiento activo
+//         $existingFriendship = Friendship::where(function($query) use ($validated) {
+//             $query->where('buddy_id', $validated['buddy_id'])
+//                   ->orWhere('peer_buddy_id', $validated['buddy_id'])
+//                   ->orWhere('buddy_id', $validated['peer_buddy_id'])
+//                   ->orWhere('peer_buddy_id', $validated['peer_buddy_id']);
+//         })
+//         ->where('status', 'Emparejado')
+//         ->first();
+
+//         if ($existingFriendship) {
+//             if ($request->ajax()) {
+//                 return response()->json([
+//                     'success' => false,
+//                     'message' => 'Una o ambas personas ya tienen un emparejamiento activo'
+//                 ], 400);
+//             }
+//             return redirect()->back()->withErrors(['error' => 'Una o ambas personas ya tienen un emparejamiento activo']);
+//         }
+
+//         // Establecer status por defecto
+//         $validated['status'] = $validated['status'] ?? 'Emparejado';
+
+//         $friendship = Friendship::create($validated);
+
+//         \Log::info('Emparejamiento creado exitosamente', ['friendship_id' => $friendship->id]);
+
+//         if ($request->ajax()) {
+//             return response()->json([
+//                 'success' => true,
+//                 'message' => 'Emparejamiento creado exitosamente',
+//                 'friendship' => $friendship
+//             ]);
+//         }
+
+//         return redirect()->back()->with('success', 'Emparejamiento creado exitosamente');
+
+//     } catch (\Illuminate\Validation\ValidationException $e) {
+//         \Log::error('Error de validación', ['errors' => $e->errors()]);
+        
+//         if ($request->ajax()) {
+//             return response()->json([
+//                 'success' => false,
+//                 'message' => 'Error de validación',
+//                 'errors' => $e->errors()
+//             ], 422);
+//         }
+        
+//         return redirect()->back()->withErrors($e->errors())->withInput();
+        
+//     } catch (\Exception $e) {
+//         \Log::error('Error al crear emparejamiento', [
+//             'message' => $e->getMessage(),
+//             'trace' => $e->getTraceAsString()
+//         ]);
+
+//         if ($request->ajax()) {
+//             return response()->json([
+//                 'success' => false,
+//                 'message' => 'Error interno del servidor: ' . $e->getMessage()
+//             ], 500);
+//         }
+
+//         return redirect()->back()->with('error', 'Error al crear el emparejamiento: ' . $e->getMessage());
+//     }
+// }
     
     public function updateStatus(Request $request, Friendship $friendship)
     {

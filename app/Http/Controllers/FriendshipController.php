@@ -85,54 +85,125 @@ class FriendshipController extends Controller
     // app/Http/Controllers/FriendshipController.php
 
 // En tu controlador FriendshipController
-public function show(Friendship $friendship){
-    $friendship->load([
-        'buddy', 
-        'peerBuddy', 
-        'buddyLeader', 
-        'peerBuddyLeader',
-        'followUps' => function($query) {
-            $query->orderBy('created_at', 'desc')->with('user');
-        },
-        'attendanceRecords' => function($query) {
-            $query->orderBy('updated_at', 'desc')
-            ->orderBy('date', 'desc');
+// public function show(Friendship $friendship){
+//     $friendship->load([
+//         'buddy', 
+//         'peerBuddy', 
+//         'buddyLeader', 
+//         'peerBuddyLeader',
+//         'followUps' => function($query) {
+//             $query->orderBy('created_at', 'desc')->with('user');
+//         },
+//         'attendanceRecords' => function($query) {
+//             $query->orderBy('updated_at', 'desc')
+//             ->orderBy('date', 'desc');
+//         }
+//     ]);
+//     // Obtener el último timestamp de actualización
+//     $lastUpdate = optional($friendship->attendanceRecords->first())->updated_at;
+
+//     // Filtrar solo los registros de la última actualización
+//     $lastUpdatedRecords = $lastUpdate 
+//         ? $friendship->attendanceRecords->where('updated_at', $lastUpdate)
+//         : collect();
+
+//     // Procesar datos de asistencia para estadísticas
+//      $stats = [
+//         'total' => $friendship->attendanceRecords->count(),
+//         'buddy_attended' => $friendship->attendanceRecords->where('buddy_attended', true)->count(),
+//         'peer_attended' => $friendship->attendanceRecords->where('peer_buddy_attended', true)->count(),
+//         'both_attended' => $friendship->attendanceRecords
+//             ->where('buddy_attended', true)
+//             ->where('peer_buddy_attended', true)
+//             ->count(),
+//         'last_update' => $lastUpdate
+//     ];
+
+//     return response()->json([
+//         'success' => true,
+//         'friendship' => $friendship,
+//         'buddy' => $friendship->buddy,
+//         'peerBuddy' => $friendship->peerBuddy,
+//         'buddyLeader' => $friendship->buddyLeader,
+//         'peerBuddyLeader' => $friendship->peerBuddyLeader,
+//         'followUps' => $friendship->followUps,
+//         'allAttendanceRecords' => $friendship->attendanceRecords,
+//         'attendanceRecords' => $lastUpdatedRecords,
+//         'attendanceStats' => $stats,
+//         'hasFollowUps' => $friendship->followUps->isNotEmpty(),
+//         'hasAttendance' => $lastUpdatedRecords->isNotEmpty()
+//     ]);
+// }
+
+public function show(Friendship $friendship)
+{
+    try {
+        // Cargar relaciones básicas primero
+        $friendship->load([
+            'buddy',
+            'peerBuddy',
+            'followUps' => function($query) {
+                $query->orderBy('created_at', 'desc')->with('user');
+            },
+            'attendanceRecords' => function($query) {
+                $query->orderBy('updated_at', 'desc')
+                      ->orderBy('date', 'desc');
+            }
+        ]);
+
+        // Cargar líderes solo si existen (para evitar errores con NULL)
+        if ($friendship->buddy_leader_id) {
+            $friendship->load('buddyLeader');
         }
-    ]);
-    // Obtener el último timestamp de actualización
-    $lastUpdate = optional($friendship->attendanceRecords->first())->updated_at;
+        
+        if ($friendship->peer_buddy_leader_id) {
+            $friendship->load('peerBuddyLeader');
+        }
 
-    // Filtrar solo los registros de la última actualización
-    $lastUpdatedRecords = $lastUpdate 
-        ? $friendship->attendanceRecords->where('updated_at', $lastUpdate)
-        : collect();
+        // Obtener el último timestamp de actualización
+        $lastUpdate = optional($friendship->attendanceRecords->first())->updated_at;
 
-    // Procesar datos de asistencia para estadísticas
-     $stats = [
-        'total' => $friendship->attendanceRecords->count(),
-        'buddy_attended' => $friendship->attendanceRecords->where('buddy_attended', true)->count(),
-        'peer_attended' => $friendship->attendanceRecords->where('peer_buddy_attended', true)->count(),
-        'both_attended' => $friendship->attendanceRecords
-            ->where('buddy_attended', true)
-            ->where('peer_buddy_attended', true)
-            ->count(),
-        'last_update' => $lastUpdate
-    ];
+        // Filtrar solo los registros de la última actualización
+        $lastUpdatedRecords = $lastUpdate
+            ? $friendship->attendanceRecords->where('updated_at', $lastUpdate)
+            : collect();
 
-    return response()->json([
-        'success' => true,
-        'friendship' => $friendship,
-        'buddy' => $friendship->buddy,
-        'peerBuddy' => $friendship->peerBuddy,
-        'buddyLeader' => $friendship->buddyLeader,
-        'peerBuddyLeader' => $friendship->peerBuddyLeader,
-        'followUps' => $friendship->followUps,
-        'allAttendanceRecords' => $friendship->attendanceRecords,
-        'attendanceRecords' => $lastUpdatedRecords,
-        'attendanceStats' => $stats,
-        'hasFollowUps' => $friendship->followUps->isNotEmpty(),
-        'hasAttendance' => $lastUpdatedRecords->isNotEmpty()
-    ]);
+        // Procesar datos de asistencia para estadísticas
+        $stats = [
+            'total' => $friendship->attendanceRecords->count(),
+            'buddy_attended' => $friendship->attendanceRecords->where('buddy_attended', true)->count(),
+            'peer_attended' => $friendship->attendanceRecords->where('peer_buddy_attended', true)->count(),
+            'both_attended' => $friendship->attendanceRecords
+                ->where('buddy_attended', true)
+                ->where('peer_buddy_attended', true)
+                ->count(),
+            'last_update' => $lastUpdate
+        ];
+
+        return response()->json([
+            'success' => true,
+            'friendship' => $friendship,
+            'buddy' => $friendship->buddy,
+            'peerBuddy' => $friendship->peerBuddy,
+            'buddyLeader' => $friendship->buddyLeader ?? null,
+            'peerBuddyLeader' => $friendship->peerBuddyLeader ?? null,
+            'followUps' => $friendship->followUps,
+            'allAttendanceRecords' => $friendship->attendanceRecords,
+            'attendanceRecords' => $lastUpdatedRecords,
+            'attendanceStats' => $stats,
+            'hasFollowUps' => $friendship->followUps->isNotEmpty(),
+            'hasAttendance' => $lastUpdatedRecords->isNotEmpty()
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error in friendship show method: ' . $e->getMessage());
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al cargar los datos del emparejamiento',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 }
     public function createBuddy()
     {
@@ -161,103 +232,103 @@ public function show(Friendship $friendship){
             ->with('success', 'Persona registrada exitosamente.');
     }
 
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'buddy_id' => 'required|exists:buddies,id',
-    //         'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
-    //         'buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
-    //         'peer_buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
-    //         'start_date' => 'required|date',
-    //         'status' => 'required|string',
-    //         'notes' => 'nullable|string'
-    //     ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'buddy_id' => 'required|exists:buddies,id',
+            'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
+            'buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
+            'peer_buddy_leader_id' => 'required|exists:users,id', // CAMBIADO: ahora referencia users
+            'start_date' => 'required|date',
+            'status' => 'required|string',
+            'notes' => 'nullable|string'
+        ]);
 
-    //     // Verificar tipos
-    //     $buddy = Buddy::findOrFail($validated['buddy_id']);
-    //     $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
+        // Verificar tipos
+        $buddy = Buddy::findOrFail($validated['buddy_id']);
+        $peerBuddy = Buddy::findOrFail($validated['peer_buddy_id']);
         
-    //     // CORREGIDO: Verificar que los líderes tengan los roles correctos
-    //     $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
-    //     $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
+        // CORREGIDO: Verificar que los líderes tengan los roles correctos
+        $buddyLeader = User::with('role')->findOrFail($validated['buddy_leader_id']);
+        $peerBuddyLeader = User::with('role')->findOrFail($validated['peer_buddy_leader_id']);
 
-    //     if ($buddy->type !== 'buddy') {
-    //         return back()->with('error', 'El Buddy seleccionado debe ser una persona con discapacidad');
-    //     }
+        if ($buddy->type !== 'buddy') {
+            return back()->with('error', 'El Buddy seleccionado debe ser una persona con discapacidad');
+        }
 
-    //     if ($peerBuddy->type !== 'peer_buddy') {
-    //         return back()->with('error', 'El PeerBuddy seleccionado debe ser una persona sin discapacidad');
-    //     }
+        if ($peerBuddy->type !== 'peer_buddy') {
+            return back()->with('error', 'El PeerBuddy seleccionado debe ser una persona sin discapacidad');
+        }
 
-    //     if (!$buddyLeader->role || $buddyLeader->role->name !== 'Líder de Buddies') {
-    //         return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de Buddies');
-    //     }
+        if (!$buddyLeader->role || $buddyLeader->role->name !== 'Líder de Buddies') {
+            return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de Buddies');
+        }
 
-    //     if (!$peerBuddyLeader->role || $peerBuddyLeader->role->name !== 'Líder de PeerBuddies') {
-    //         return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de PeerBuddies');
-    //     }
+        if (!$peerBuddyLeader->role || $peerBuddyLeader->role->name !== 'Líder de PeerBuddies') {
+            return back()->with('error', 'El usuario seleccionado debe tener el rol de Líder de PeerBuddies');
+        }
 
-    //     // Verificar relación existente
-    //     // $existing = Friendship::where(function($q) use ($validated) {
-    //     //     $q->where('buddy_id', $validated['buddy_id'])
-    //     //       ->where('peer_buddy_id', $validated['peer_buddy_id']);
-    //     // })->orWhere(function($q) use ($validated) {
-    //     //     $q->where('buddy_id', $validated['peer_buddy_id'])
-    //     //       ->where('peer_buddy_id', $validated['buddy_id']);
-    //     // })->exists();
+        // Verificar relación existente
+        // $existing = Friendship::where(function($q) use ($validated) {
+        //     $q->where('buddy_id', $validated['buddy_id'])
+        //       ->where('peer_buddy_id', $validated['peer_buddy_id']);
+        // })->orWhere(function($q) use ($validated) {
+        //     $q->where('buddy_id', $validated['peer_buddy_id'])
+        //       ->where('peer_buddy_id', $validated['buddy_id']);
+        // })->exists();
 
-    //     // if ($existing) {
-    //     //     return back()->with('error', 'Esta relación de amistad ya existe');
-    //     // }
+        // if ($existing) {
+        //     return back()->with('error', 'Esta relación de amistad ya existe');
+        // }
 
-    //     Friendship::create($validated);
+        Friendship::create($validated);
 
-    //     return redirect()->route('friendships.index')
-    //         ->with('success', 'Emparejamiento creado exitosamente');
-    // }
+        return redirect()->route('friendships.index')
+            ->with('success', 'Emparejamiento creado exitosamente');
+    }
 
     // FriendshipController.php
 
 
-    public function store(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'buddy_id' => 'required|exists:buddies,id',
-            'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'status' => 'nullable|in:Emparejado,Inactivo,Pendiente',
-            'notes' => 'nullable|string'
-        ]);
+//     public function store(Request $request)
+// {
+//     try {
+//         $validated = $request->validate([
+//             'buddy_id' => 'required|exists:buddies,id',
+//             'peer_buddy_id' => 'required|exists:buddies,id|different:buddy_id',
+//             'start_date' => 'required|date',
+//             'end_date' => 'nullable|date|after:start_date',
+//             'status' => 'nullable|in:Emparejado,Inactivo,Pendiente',
+//             'notes' => 'nullable|string'
+//         ]);
 
-        $friendship = Friendship::create($validated);
+//         $friendship = Friendship::create($validated);
         
-        \Log::info('Friendship created:', $friendship->toArray());
+//         \Log::info('Friendship created:', $friendship->toArray());
 
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Emparejamiento creado exitosamente',
-                'friendship' => $friendship
-            ]);
-        }
+//         if ($request->ajax()) {
+//             return response()->json([
+//                 'success' => true,
+//                 'message' => 'Emparejamiento creado exitosamente',
+//                 'friendship' => $friendship
+//             ]);
+//         }
 
-        return redirect()->back()->with('success', 'Emparejamiento creado exitosamente');
+//         return redirect()->back()->with('success', 'Emparejamiento creado exitosamente');
         
-    } catch (\Exception $e) {
-        \Log::error('Error creating friendship:', ['error' => $e->getMessage()]);
+//     } catch (\Exception $e) {
+//         \Log::error('Error creating friendship:', ['error' => $e->getMessage()]);
         
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear el emparejamiento: ' . $e->getMessage()
-            ], 500);
-        }
+//         if ($request->ajax()) {
+//             return response()->json([
+//                 'success' => false,
+//                 'message' => 'Error al crear el emparejamiento: ' . $e->getMessage()
+//             ], 500);
+//         }
         
-        return redirect()->back()->with('error', 'Error al crear el emparejamiento');
-    }
-}
+//         return redirect()->back()->with('error', 'Error al crear el emparejamiento');
+//     }
+// }
     public function updateStatus(Request $request, Friendship $friendship)
     {
         $validated = $request->validate([

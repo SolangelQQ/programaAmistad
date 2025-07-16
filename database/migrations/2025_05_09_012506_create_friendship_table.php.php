@@ -12,6 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('buddy_id')->constrained('buddies')->onDelete('cascade');
             $table->foreignId('peer_buddy_id')->constrained('buddies')->onDelete('cascade');
+            // CORRECTO
+$table->foreign('buddy_leader_id')->references('id')->on('users');
+$table->foreign('peer_buddy_leader_id')->references('id')->on('users');
             $table->string('status')->default('Emparejado');
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();

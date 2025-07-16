@@ -369,6 +369,9 @@ Route::prefix('reports')->group(function() {
     Route::post('liderazgo', [ReportsController::class, 'liderazgo']);
     Route::post('export', [ReportsController::class, 'export']);
 });
+//aca
+Route::get('/friendships/{id}/tracking', [FriendshipController::class, 'tracking'])
+        ->name('friendships.tracking');
 Route::get('/friendships/tracking', [FriendshipController::class, 'tracking'])->name('friendships.tracking');
 Route::prefix('friendships/{friendship}')->name('friendships.')->group(function () {
     // Mostrar modal de seguimiento

@@ -645,115 +645,115 @@ public function storeAttendance(Request $request, $friendshipId)
     ]);
 }
 
-    // public function tracking()
-    // {
-    //     return view('modals.friendships.tracking');
-    // }
-
-    public function tracking(Friendship $friendship)
-{
-    try {
-        // Cargar las relaciones necesarias
-        $friendship->load([
-            'buddy', 
-            'peerBuddy', 
-            'buddyLeader', 
-            'peerBuddyLeader',
-            'followUps' => function($query) {
-                $query->orderBy('created_at', 'desc')->with('user');
-            },
-            'attendanceRecords' => function($query) {
-                $query->orderBy('date', 'desc');
-            }
-        ]);
-
-        // Obtener estadísticas de seguimiento
-        $followUpStats = [
-            'total_followups' => $friendship->followUps->count(),
-            'last_followup' => $friendship->followUps->first(),
-            'avg_buddy_progress' => $friendship->followUps->avg('buddy_progress'),
-            'avg_peer_progress' => $friendship->followUps->avg('peer_buddy_progress'),
-            'avg_relationship_quality' => $friendship->followUps->avg('relationship_quality')
-        ];
-
-        // Obtener estadísticas de asistencia
-        $attendanceStats = [
-            'total_sessions' => $friendship->attendanceRecords->count(),
-            'buddy_attendance_rate' => $friendship->attendanceRecords->count() > 0 
-                ? ($friendship->attendanceRecords->where('buddy_attended', true)->count() / $friendship->attendanceRecords->count()) * 100 
-                : 0,
-            'peer_attendance_rate' => $friendship->attendanceRecords->count() > 0 
-                ? ($friendship->attendanceRecords->where('peer_buddy_attended', true)->count() / $friendship->attendanceRecords->count()) * 100 
-                : 0,
-            'joint_attendance_rate' => $friendship->attendanceRecords->count() > 0 
-                ? ($friendship->attendanceRecords->where('buddy_attended', true)->where('peer_buddy_attended', true)->count() / $friendship->attendanceRecords->count()) * 100 
-                : 0
-        ];
-
-        // Obtener el último registro de asistencia
-        $lastAttendanceUpdate = $friendship->attendanceRecords->first();
-
-        return response()->json([
-            'success' => true,
-            'friendship' => [
-                'id' => $friendship->id,
-                'status' => $friendship->status,
-                'start_date' => $friendship->start_date,
-                'end_date' => $friendship->end_date,
-                'buddy' => [
-                    'id' => $friendship->buddy->id,
-                    'name' => $friendship->buddy->first_name . ' ' . $friendship->buddy->last_name,
-                    'disability' => $friendship->buddy->disability ?? 'No especificada'
-                ],
-                'peerBuddy' => [
-                    'id' => $friendship->peerBuddy->id,
-                    'name' => $friendship->peerBuddy->first_name . ' ' . $friendship->peerBuddy->last_name
-                ],
-                'buddyLeader' => $friendship->buddyLeader ? [
-                    'id' => $friendship->buddyLeader->id,
-                    'name' => $friendship->buddyLeader->name
-                ] : null,
-                'peerBuddyLeader' => $friendship->peerBuddyLeader ? [
-                    'id' => $friendship->peerBuddyLeader->id,
-                    'name' => $friendship->peerBuddyLeader->name
-                ] : null,
-            ],
-            'followUps' => $friendship->followUps->map(function($followUp) {
-                return [
-                    'id' => $followUp->id,
-                    'buddy_progress' => $followUp->buddy_progress,
-                    'peer_buddy_progress' => $followUp->peer_buddy_progress,
-                    'relationship_quality' => $followUp->relationship_quality,
-                    'goals_achieved' => $followUp->goals_achieved,
-                    'challenges_faced' => $followUp->challenges_faced,
-                    'created_at' => $followUp->created_at->format('d/m/Y H:i'),
-                    'user' => $followUp->user ? $followUp->user->name : 'Usuario desconocido'
-                ];
-            }),
-            'attendanceRecords' => $friendship->attendanceRecords->map(function($record) {
-                return [
-                    'id' => $record->id,
-                    'date' => $record->date,
-                    'buddy_attended' => $record->buddy_attended,
-                    'peer_buddy_attended' => $record->peer_buddy_attended,
-                    'updated_at' => $record->updated_at->format('d/m/Y H:i')
-                ];
-            }),
-            'followUpStats' => $followUpStats,
-            'attendanceStats' => $attendanceStats,
-            'lastAttendanceUpdate' => $lastAttendanceUpdate ? $lastAttendanceUpdate->updated_at->format('d/m/Y H:i') : null
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('Error en tracking method: ' . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Error al cargar los datos de seguimiento',
-            'error' => $e->getMessage()
-        ], 500);
+    public function tracking()
+    {
+        return view('modals.friendships.tracking');
     }
-}
+
+//     public function tracking(Friendship $friendship)
+// {
+//     try {
+//         // Cargar las relaciones necesarias
+//         $friendship->load([
+//             'buddy', 
+//             'peerBuddy', 
+//             'buddyLeader', 
+//             'peerBuddyLeader',
+//             'followUps' => function($query) {
+//                 $query->orderBy('created_at', 'desc')->with('user');
+//             },
+//             'attendanceRecords' => function($query) {
+//                 $query->orderBy('date', 'desc');
+//             }
+//         ]);
+
+//         // Obtener estadísticas de seguimiento
+//         $followUpStats = [
+//             'total_followups' => $friendship->followUps->count(),
+//             'last_followup' => $friendship->followUps->first(),
+//             'avg_buddy_progress' => $friendship->followUps->avg('buddy_progress'),
+//             'avg_peer_progress' => $friendship->followUps->avg('peer_buddy_progress'),
+//             'avg_relationship_quality' => $friendship->followUps->avg('relationship_quality')
+//         ];
+
+//         // Obtener estadísticas de asistencia
+//         $attendanceStats = [
+//             'total_sessions' => $friendship->attendanceRecords->count(),
+//             'buddy_attendance_rate' => $friendship->attendanceRecords->count() > 0 
+//                 ? ($friendship->attendanceRecords->where('buddy_attended', true)->count() / $friendship->attendanceRecords->count()) * 100 
+//                 : 0,
+//             'peer_attendance_rate' => $friendship->attendanceRecords->count() > 0 
+//                 ? ($friendship->attendanceRecords->where('peer_buddy_attended', true)->count() / $friendship->attendanceRecords->count()) * 100 
+//                 : 0,
+//             'joint_attendance_rate' => $friendship->attendanceRecords->count() > 0 
+//                 ? ($friendship->attendanceRecords->where('buddy_attended', true)->where('peer_buddy_attended', true)->count() / $friendship->attendanceRecords->count()) * 100 
+//                 : 0
+//         ];
+
+//         // Obtener el último registro de asistencia
+//         $lastAttendanceUpdate = $friendship->attendanceRecords->first();
+
+//         return response()->json([
+//             'success' => true,
+//             'friendship' => [
+//                 'id' => $friendship->id,
+//                 'status' => $friendship->status,
+//                 'start_date' => $friendship->start_date,
+//                 'end_date' => $friendship->end_date,
+//                 'buddy' => [
+//                     'id' => $friendship->buddy->id,
+//                     'name' => $friendship->buddy->first_name . ' ' . $friendship->buddy->last_name,
+//                     'disability' => $friendship->buddy->disability ?? 'No especificada'
+//                 ],
+//                 'peerBuddy' => [
+//                     'id' => $friendship->peerBuddy->id,
+//                     'name' => $friendship->peerBuddy->first_name . ' ' . $friendship->peerBuddy->last_name
+//                 ],
+//                 'buddyLeader' => $friendship->buddyLeader ? [
+//                     'id' => $friendship->buddyLeader->id,
+//                     'name' => $friendship->buddyLeader->name
+//                 ] : null,
+//                 'peerBuddyLeader' => $friendship->peerBuddyLeader ? [
+//                     'id' => $friendship->peerBuddyLeader->id,
+//                     'name' => $friendship->peerBuddyLeader->name
+//                 ] : null,
+//             ],
+//             'followUps' => $friendship->followUps->map(function($followUp) {
+//                 return [
+//                     'id' => $followUp->id,
+//                     'buddy_progress' => $followUp->buddy_progress,
+//                     'peer_buddy_progress' => $followUp->peer_buddy_progress,
+//                     'relationship_quality' => $followUp->relationship_quality,
+//                     'goals_achieved' => $followUp->goals_achieved,
+//                     'challenges_faced' => $followUp->challenges_faced,
+//                     'created_at' => $followUp->created_at->format('d/m/Y H:i'),
+//                     'user' => $followUp->user ? $followUp->user->name : 'Usuario desconocido'
+//                 ];
+//             }),
+//             'attendanceRecords' => $friendship->attendanceRecords->map(function($record) {
+//                 return [
+//                     'id' => $record->id,
+//                     'date' => $record->date,
+//                     'buddy_attended' => $record->buddy_attended,
+//                     'peer_buddy_attended' => $record->peer_buddy_attended,
+//                     'updated_at' => $record->updated_at->format('d/m/Y H:i')
+//                 ];
+//             }),
+//             'followUpStats' => $followUpStats,
+//             'attendanceStats' => $attendanceStats,
+//             'lastAttendanceUpdate' => $lastAttendanceUpdate ? $lastAttendanceUpdate->updated_at->format('d/m/Y H:i') : null
+//         ]);
+
+//     } catch (\Exception $e) {
+//         \Log::error('Error en tracking method: ' . $e->getMessage());
+        
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Error al cargar los datos de seguimiento',
+//             'error' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
     public function getAttendanceRange(Friendship $friendship, Request $request)
 {

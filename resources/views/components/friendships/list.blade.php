@@ -473,35 +473,35 @@ async function apiRequest(url, options = {}) {
 }
 
 // Main friendship details modal
-// async function showFriendshipDetails(friendshipId) {
-//     const modal = document.getElementById('view-friendship-modal');
-//     const modalContent = document.getElementById('modal-content');
+async function showFriendshipDetails(friendshipId) {
+    const modal = document.getElementById('view-friendship-modal');
+    const modalContent = document.getElementById('modal-content');
     
-//     if (!modal || !modalContent) {
-//         console.error('Modal elements not found');
-//         return;
-//     }
+    if (!modal || !modalContent) {
+        console.error('Modal elements not found');
+        return;
+    }
 
-//     try {
-//         modal.classList.remove('hidden');
-//         showLoadingSpinner(modalContent, 'Cargando detalles del emparejamiento...');
+    try {
+        modal.classList.remove('hidden');
+        showLoadingSpinner(modalContent, 'Cargando detalles del emparejamiento...');
 
-//         const data = await apiRequest(`/friendships/${friendshipId}/show`, { method: 'GET' });
+        const data = await apiRequest(`/friendships/${friendshipId}/show`, { method: 'GET' });
         
-//         if (!data?.friendship) {
-//             throw new Error('Los datos recibidos no son válidos');
-//         }
+        if (!data?.friendship) {
+            throw new Error('Los datos recibidos no son válidos');
+        }
 
-//         restoreModalContent();
-//         populateModalData(data);
-//         handleFollowUpDisplay(data);
-//         handleAttendanceDisplay(data);
+        restoreModalContent();
+        populateModalData(data);
+        handleFollowUpDisplay(data);
+        handleAttendanceDisplay(data);
 
-//     } catch (error) {
-//         console.error('Error loading friendship details:', error);
-//         showError(modalContent, `No se pudieron cargar los detalles del emparejamiento. ${error.message}`);
-//     }
-// }
+    } catch (error) {
+        console.error('Error loading friendship details:', error);
+        showError(modalContent, `No se pudieron cargar los detalles del emparejamiento. ${error.message}`);
+    }
+}
 
 function populateModalData(data) {
     const elements = [
@@ -1428,48 +1428,48 @@ function openFollowUpModal(friendshipId) {
 }
 
 // Función para mostrar detalles del emparejamiento
-async function showFriendshipDetails(friendshipId) {
-    const modal = document.getElementById('view-friendship-modal');
+// async function showFriendshipDetails(friendshipId) {
+//     const modal = document.getElementById('view-friendship-modal');
     
-    try {
-        modal.classList.remove('hidden');
+//     try {
+//         modal.classList.remove('hidden');
         
-        const modalContent = document.getElementById('modal-content');
-        const originalContent = modalContent.innerHTML;
+//         const modalContent = document.getElementById('modal-content');
+//         const originalContent = modalContent.innerHTML;
         
-        // Mostrar loading
-        modalContent.innerHTML = `
-            <div class="flex justify-center items-center p-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span class="ml-2">Cargando detalles del emparejamiento...</span>
-            </div>
-        `;
+//         // Mostrar loading
+//         modalContent.innerHTML = `
+//             <div class="flex justify-center items-center p-8">
+//                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+//                 <span class="ml-2">Cargando detalles del emparejamiento...</span>
+//             </div>
+//         `;
         
-        // Hacer fetch y poblar datos
-        const response = await appFetch(`/friendships/${friendshipId}/show`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-            }
-        });
+//         // Hacer fetch y poblar datos
+//         const response = await appFetch(`/friendships/${friendshipId}/show`, {
+//             method: 'GET',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'X-Requested-With': 'XMLHttpRequest',
+//                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+//             }
+//         });
 
-        if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
+//         if (!response.ok) {
+//             throw new Error(`Error ${response.status}: ${response.statusText}`);
+//         }
 
-        const data = await response.json();
-        modalContent.innerHTML = originalContent;
-        populateModalData(data);
-        handleFollowUpDisplay(data);
-        handleAttendanceDisplay(data);
+//         const data = await response.json();
+//         modalContent.innerHTML = originalContent;
+//         populateModalData(data);
+//         handleFollowUpDisplay(data);
+//         handleAttendanceDisplay(data);
 
-    } catch (error) {
-        console.error('Error:', error);
-        // Mostrar error en el modal
-    }
-}
+//     } catch (error) {
+//         console.error('Error:', error);
+//         // Mostrar error en el modal
+//     }
+// }
 
 
 

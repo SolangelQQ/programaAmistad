@@ -716,10 +716,48 @@ public function storeAttendance(Request $request, $friendshipId)
     ]);
 }
 
-    public function tracking()
-    {
-        return view('modals.friendships.tracking');
+    // public function tracking()
+    // {
+    //     return view('modals.friendships.tracking');
+    // }
+
+    public function tracking($id)
+{
+    try {
+        $friendship = Friendship::with(['buddy', 'peerBuddy'])->findOrFail($id);
+        
+        // Verificar que existan las relaciones
+        if (!$friendship->buddy || !$friendship->peerBuddy) {
+            return response()->json(['error' => 'Relaciones de emparejamiento incompletas'], 422);
+        }
+        
+        return response()->json([
+            'friendship' => [
+                'id' => $friendship->id,
+                'status' => $friendship->status,
+                'start_date' => $friendship->start_date,
+                'end_date' => $friendship->end_date,
+                'notes' => $friendship->notes,
+                'buddy' => [
+                    'id' => $friendship->buddy->id,
+                    'full_name' => $friendship->buddy->full_name,
+                    'disability' => $friendship->buddy->disability ?? 'N/A',
+                    'email' => $friendship->buddy->email,
+                ],
+                'peerBuddy' => [
+                    'id' => $friendship->peerBuddy->id,
+                    'full_name' => $friendship->peerBuddy->full_name,
+                    'age' => $friendship->peerBuddy->age,
+                    'email' => $friendship->peerBuddy->email,
+                ]
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error in tracking method: ' . $e->getMessage());
+        return response()->json(['error' => 'Error interno del servidor'], 500);
     }
+}
 
 //     public function tracking(Friendship $friendship)
 // {

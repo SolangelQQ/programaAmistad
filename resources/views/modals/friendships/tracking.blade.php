@@ -42,7 +42,7 @@
                             class="tab-button whitespace-nowrap border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Asistencia
                     </button>
-                    <button type="button" onclick="switchTab('history')" id="history-tab" 
+                    <button type="button" onclick="switchTab('monitoring')" id="monitoring-tab" 
                             class="tab-button whitespace-nowrap border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Monitoreo de Tutores
                     </button>
@@ -233,7 +233,9 @@
             </div>
             
             <!-- Incluir el componente de monitoreo mensual -->
-            @include('components.friendships.monthly-monitoring')
+            <!-- @include('components.friendships.monthly-monitoring') -->
+             <!-- resources/views/components/monthly-monitoring.blade.php -->
+
         </div>
     </div>
 </div>
@@ -243,11 +245,50 @@
     let currentFriendshipId = null;
 let currentFollowUpId = null;
 
+// function openFollowUpModal(friendshipId) {
+//     currentFriendshipId = friendshipId;
+//     currentFollowUpId = null;
+    
+//     fetch(`/friendships/${friendshipId}/tracking`)
+//         .then(response => {
+//             if (!response.ok) {
+//                 throw new Error(`HTTP error! status: ${response.status}`);
+//             }
+//             return response.json();
+//         })
+//         .then(data => {
+//             populateFollowUpModal(data);
+//             document.getElementById('follow-up-modal').classList.remove('hidden');
+//             setupAttendanceForm(data.friendship);
+//             switchTab('follow-up'); // Asegurar que el tab correcto esté activo
+//         })
+//         .catch(error => {
+//             console.error('Error loading friendship data:', error);
+//             alert('Error al cargar los datos del emparejamiento');
+//         });
+// }
+
+
 function openFollowUpModal(friendshipId) {
-    currentFriendshipId = friendshipId;
+    // VALIDAR QUE friendshipId NO SEA NULL O UNDEFINED
+    if (!friendshipId || friendshipId === 'null' || friendshipId === null) {
+        console.error('Invalid friendship ID:', friendshipId);
+        alert('Error: ID de amistad inválido');
+        return;
+    }
+    
+    // CONVERTIR A NÚMERO ENTERO
+    const numericFriendshipId = parseInt(friendshipId, 10);
+    if (isNaN(numericFriendshipId)) {
+        console.error('Invalid friendship ID format:', friendshipId);
+        alert('Error: Formato de ID de amistad inválido');
+        return;
+    }
+    
+    currentFriendshipId = numericFriendshipId;
     currentFollowUpId = null;
     
-    fetch(`/friendships/${friendshipId}/tracking`)
+    fetch(`/friendships/${currentFriendshipId}/tracking`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -258,7 +299,7 @@ function openFollowUpModal(friendshipId) {
             populateFollowUpModal(data);
             document.getElementById('follow-up-modal').classList.remove('hidden');
             setupAttendanceForm(data.friendship);
-            switchTab('follow-up'); // Asegurar que el tab correcto esté activo
+            switchTab('follow-up');
         })
         .catch(error => {
             console.error('Error loading friendship data:', error);
@@ -303,10 +344,10 @@ function switchTab(tabName) {
             tabId = 'attendance-tab';
             activeColor = 'blue';
             break;
-        case 'history':
+        case 'monitoring':
         case 'monitoring':
             contentId = 'monitoring-content';
-            tabId = 'history-tab';
+            tabId = 'monitoring-tab';
             activeColor = 'blue';
             break;
         default:
@@ -318,6 +359,7 @@ function switchTab(tabName) {
     const activeContent = document.getElementById(contentId);
     if (activeContent) {
         activeContent.classList.remove('hidden');
+        console.log('Mostrando contenido:', contentId); // Debug
     } else {
         console.error('Contenido no encontrado:', contentId);
     }
@@ -331,6 +373,7 @@ function switchTab(tabName) {
             activeTab.classList.add('border-purple-500', 'text-purple-600');
         }
         activeTab.classList.remove('border-transparent', 'text-gray-500');
+        console.log('Activando tab:', tabId); // Debug
     } else {
         console.error('Tab no encontrado:', tabId);
     }
@@ -338,21 +381,95 @@ function switchTab(tabName) {
     // Ejecutar lógica específica para cada tab
     switch(tabName) {
         case 'follow-up':
-            // Lógica específica para evaluación
             console.log('Tab de evaluación activado');
             break;
         case 'attendance':
-            // Lógica específica para asistencia
             console.log('Tab de asistencia activado');
             break;
-        case 'history':
         case 'monitoring':
-            // Lógica específica para monitoreo
+        case 'monitoring':
             console.log('Tab de monitoreo activado');
             loadMonitoringData();
             break;
     }
 }
+
+// function switchTab(tabName) {
+//     // Ocultar todos los contenidos
+//     document.querySelectorAll('.tab-content').forEach(content => {
+//         content.classList.add('hidden');
+//     });
+    
+//     // Remover clase active de todos los tabs
+//     document.querySelectorAll('.tab-button').forEach(button => {
+//         button.classList.remove('border-blue-500', 'text-blue-600', 'border-purple-500', 'text-purple-600');
+//         button.classList.add('border-transparent', 'text-gray-500');
+//     });
+    
+//     // Mapear nombres de tabs a sus contenidos correspondientes
+//     let contentId, tabId, activeColor;
+    
+//     switch(tabName) {
+//         case 'follow-up':
+//             contentId = 'follow-up-content';
+//             tabId = 'follow-up-tab';
+//             activeColor = 'blue';
+//             break;
+//         case 'attendance':
+//             contentId = 'attendance-content';
+//             tabId = 'attendance-tab';
+//             activeColor = 'blue';
+//             break;
+//         case 'monitoring':
+//         case 'monitoring':
+//             contentId = 'monitoring-content';
+//             tabId = 'monitoring-tab';
+//             activeColor = 'blue';
+//             break;
+//         default:
+//             console.warn('Tab no reconocido:', tabName);
+//             return;
+//     }
+    
+//     // Mostrar contenido activo
+//     const activeContent = document.getElementById(contentId);
+//     if (activeContent) {
+//         activeContent.classList.remove('hidden');
+//     } else {
+//         console.error('Contenido no encontrado:', contentId);
+//     }
+    
+//     // Activar tab
+//     const activeTab = document.getElementById(tabId);
+//     if (activeTab) {
+//         if (activeColor === 'blue') {
+//             activeTab.classList.add('border-blue-500', 'text-blue-600');
+//         } else if (activeColor === 'purple') {
+//             activeTab.classList.add('border-purple-500', 'text-purple-600');
+//         }
+//         activeTab.classList.remove('border-transparent', 'text-gray-500');
+//     } else {
+//         console.error('Tab no encontrado:', tabId);
+//     }
+    
+//     // Ejecutar lógica específica para cada tab
+//     switch(tabName) {
+//         case 'follow-up':
+//             // Lógica específica para evaluación
+//             console.log('Tab de evaluación activado');
+//             break;
+//         case 'attendance':
+//             // Lógica específica para asistencia
+//             console.log('Tab de asistencia activado');
+//             break;
+//         case 'monitoring':
+//         case 'monitoring':
+//             // Lógica específica para monitoreo
+//             console.log('Tab de monitoreo activado');
+//             loadMonitoringData();
+//             break;
+//     }
+// }
 
 // Función auxiliar para cargar datos del monitoreo
 function loadMonitoringData() {
@@ -440,8 +557,39 @@ function setupAttendanceForm(friendship) {
     }
 }
 
+// function checkExistingFollowUp(friendshipId) {
+//     fetch(`/friendships/${friendshipId}/latest-follow-up`)
+//         .then(response => response.json())
+//         .then(data => {
+//             if (data.followUp) {
+//                 currentFollowUpId = data.followUp.id;
+//                 populateFollowUpForm(data.followUp);
+//                 document.getElementById('follow-up-submit-btn').textContent = 'Actualizar Seguimiento';
+//                 document.getElementById('follow-up-method').value = 'PUT';
+//             } else {
+//                 document.getElementById('follow-up-submit-btn').textContent = 'Guardar Seguimiento';
+//                 document.getElementById('follow-up-method').value = 'POST';
+//             }
+//         })
+//         .catch(error => {
+//             console.error('Error checking existing follow-up:', error);
+//         });
+// }
+
 function checkExistingFollowUp(friendshipId) {
-    fetch(`/friendships/${friendshipId}/latest-follow-up`)
+    // VALIDAR QUE friendshipId SEA VÁLIDO
+    if (!friendshipId || friendshipId === 'null' || friendshipId === null) {
+        console.error('Invalid friendship ID in checkExistingFollowUp:', friendshipId);
+        return;
+    }
+    
+    const numericFriendshipId = parseInt(friendshipId, 10);
+    if (isNaN(numericFriendshipId)) {
+        console.error('Invalid friendship ID format in checkExistingFollowUp:', friendshipId);
+        return;
+    }
+    
+    fetch(`/friendships/${numericFriendshipId}/latest-follow-up`)
         .then(response => response.json())
         .then(data => {
             if (data.followUp) {
@@ -484,6 +632,17 @@ function formatDateToString(date) {
 }
 
 function generateAttendanceDays() {
+    // VALIDAR QUE currentFriendshipId SEA VÁLIDO
+    if (!currentFriendshipId || currentFriendshipId === 'null' || currentFriendshipId === null) {
+        console.error('Invalid currentFriendshipId in generateAttendanceDays:', currentFriendshipId);
+        document.getElementById('attendance-days-container').innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                Error: ID de amistad no válido
+            </div>
+        `;
+        return;
+    }
+    
     const startDateStr = document.getElementById('attendance_start_date').value;
     const endDateStr = document.getElementById('attendance_end_date').value;
     
@@ -514,7 +673,7 @@ function generateAttendanceDays() {
         return;
     }
     
-    // Obtener asistencias existentes
+    // USAR currentFriendshipId QUE YA ES NUMÉRICO
     fetch(`/friendships/${currentFriendshipId}/attendance-range?start_date=${startDateStr}&end_date=${endDateStr}`)
         .then(response => response.json())
         .then(data => {
@@ -526,6 +685,50 @@ function generateAttendanceDays() {
             renderAttendanceDays(start, end, {});
         });
 }
+
+// function generateAttendanceDays() {
+//     const startDateStr = document.getElementById('attendance_start_date').value;
+//     const endDateStr = document.getElementById('attendance_end_date').value;
+    
+//     document.getElementById('attendance_dates_hidden').value = JSON.stringify({
+//         start_date: startDateStr,
+//         end_date: endDateStr
+//     });
+
+//     if (!startDateStr || !endDateStr) {
+//         document.getElementById('attendance-days-container').innerHTML = `
+//             <div class="text-center py-8 text-gray-500">
+//                 Selecciona las fechas de inicio y fin para generar los días
+//             </div>
+//         `;
+//         return;
+//     }
+    
+//     const start = createLocalDate(startDateStr);
+//     const end = createLocalDate(endDateStr);
+//     const container = document.getElementById('attendance-days-container');
+    
+//     if (start > end) {
+//         container.innerHTML = `
+//             <div class="text-center py-8 text-red-500">
+//                 La fecha de inicio debe ser anterior a la fecha de fin
+//             </div>
+//         `;
+//         return;
+//     }
+    
+//     // Obtener asistencias existentes
+//     fetch(`/friendships/${currentFriendshipId}/attendance-range?start_date=${startDateStr}&end_date=${endDateStr}`)
+//         .then(response => response.json())
+//         .then(data => {
+//             const existingAttendance = data.attendance || {};
+//             renderAttendanceDays(start, end, existingAttendance);
+//         })
+//         .catch(error => {
+//             console.error('Error loading existing attendance:', error);
+//             renderAttendanceDays(start, end, {});
+//         });
+// }
 
 function renderAttendanceDays(startDate, endDate, existingAttendance) {
     const container = document.getElementById('attendance-days-container');
@@ -653,9 +856,32 @@ function toggleAllAttendance(type, checked) {
     });
 }
 
-// Función para cargar el historial de seguimientos
-function loadFollowUpHistory(friendshipId) {
-    const container = document.getElementById('followup-history-content');
+function loadFollowUpmonitoring(friendshipId) {
+    // VALIDAR QUE friendshipId SEA VÁLIDO
+    if (!friendshipId || friendshipId === 'null' || friendshipId === null) {
+        console.error('Invalid friendship ID in loadFollowUpmonitoring:', friendshipId);
+        const container = document.getElementById('followup-monitoring-content');
+        container.innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                Error: ID de amistad no válido
+            </div>
+        `;
+        return;
+    }
+    
+    const numericFriendshipId = parseInt(friendshipId, 10);
+    if (isNaN(numericFriendshipId)) {
+        console.error('Invalid friendship ID format in loadFollowUpmonitoring:', friendshipId);
+        const container = document.getElementById('followup-monitoring-content');
+        container.innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                Error: Formato de ID de amistad inválido
+            </div>
+        `;
+        return;
+    }
+    
+    const container = document.getElementById('followup-monitoring-content');
     
     // Mostrar loading
     container.innerHTML = `
@@ -670,7 +896,7 @@ function loadFollowUpHistory(friendshipId) {
         </div>
     `;
     
-    fetch(`/friendships/${friendshipId}/follow-ups-history`)
+    fetch(`/friendships/${numericFriendshipId}/follow-ups-monitoring`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -678,14 +904,14 @@ function loadFollowUpHistory(friendshipId) {
             return response.json();
         })
         .then(data => {
-            renderFollowUpHistory(data.followUps || []);
+            renderFollowUpmonitoring(data.followUps || []);
         })
         .catch(error => {
-            console.error('Error loading follow-up history:', error);
+            console.error('Error loading follow-up monitoring:', error);
             container.innerHTML = `
                 <div class="text-center py-8 text-red-500">
                     <p>Error al cargar el historial</p>
-                    <button onclick="loadFollowUpHistory(${friendshipId})" class="mt-2 text-sm text-blue-600 hover:text-blue-800">
+                    <button onclick="loadFollowUpmonitoring(${numericFriendshipId})" class="mt-2 text-sm text-blue-600 hover:text-blue-800">
                         Reintentar
                     </button>
                 </div>
@@ -693,9 +919,59 @@ function loadFollowUpHistory(friendshipId) {
         });
 }
 
+function initializeGlobalVariables() {
+    // ASEGURAR QUE LAS VARIABLES GLOBALES ESTÉN INICIALIZADAS
+    if (typeof currentFriendshipId === 'undefined') {
+        window.currentFriendshipId = null;
+    }
+    if (typeof currentFollowUpId === 'undefined') {
+        window.currentFollowUpId = null;
+    }
+}
+
+// Función para cargar el historial de seguimientos
+// function loadFollowUpmonitoring(friendshipId) {
+//     const container = document.getElementById('followup-monitoring-content');
+    
+//     // Mostrar loading
+//     container.innerHTML = `
+//         <div class="text-center py-8">
+//             <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-gray-500 bg-white">
+//                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+//                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+//                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+//                 </svg>
+//                 Cargando historial...
+//             </div>
+//         </div>
+//     `;
+    
+//     fetch(`/friendships/${friendshipId}/follow-ups-monitoring`)
+//         .then(response => {
+//             if (!response.ok) {
+//                 throw new Error(`HTTP error! status: ${response.status}`);
+//             }
+//             return response.json();
+//         })
+//         .then(data => {
+//             renderFollowUpmonitoring(data.followUps || []);
+//         })
+//         .catch(error => {
+//             console.error('Error loading follow-up monitoring:', error);
+//             container.innerHTML = `
+//                 <div class="text-center py-8 text-red-500">
+//                     <p>Error al cargar el historial</p>
+//                     <button onclick="loadFollowUpmonitoring(${friendshipId})" class="mt-2 text-sm text-blue-600 hover:text-blue-800">
+//                         Reintentar
+//                     </button>
+//                 </div>
+//             `;
+//         });
+// }
+
 // Función para renderizar el historial de seguimientos
-function renderFollowUpHistory(followUps) {
-    const container = document.getElementById('followup-history-content');
+function renderFollowUpmonitoring(followUps) {
+    const container = document.getElementById('followup-monitoring-content');
     
     if (followUps.length === 0) {
         container.innerHTML = `
@@ -778,6 +1054,7 @@ function renderFollowUpHistory(followUps) {
 document.addEventListener('DOMContentLoaded', function() {
     // Formulario de seguimiento
     const followUpForm = document.getElementById('follow-up-form');
+    initializeGlobalVariables();
     if (followUpForm) {
         followUpForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -804,8 +1081,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Función para enviar el formulario de seguimiento
 function submitFollowUpForm() {
+    // VALIDAR QUE currentFriendshipId SEA VÁLIDO
+    if (!currentFriendshipId || currentFriendshipId === 'null' || currentFriendshipId === null) {
+        console.error('Invalid currentFriendshipId in submitFollowUpForm:', currentFriendshipId);
+        alert('Error: ID de amistad no válido');
+        return;
+    }
+    
     const form = document.getElementById('follow-up-form');
     const formData = new FormData(form);
     const submitBtn = document.getElementById('follow-up-submit-btn');
@@ -863,8 +1146,198 @@ function submitFollowUpForm() {
     });
 }
 
+function exampleUsage() {
+    // En lugar de usar directamente currentFriendshipId, validarlo primero
+    const validFriendshipId = validateId(currentFriendshipId, 'example function');
+    if (!validFriendshipId) {
+        alert('Error: ID de amistad no válido');
+        return;
+    }
+    
+    // Usar validFriendshipId en lugar de currentFriendshipId
+    fetch(`/friendships/${validFriendshipId}/some-endpoint`)
+        .then(response => response.json())
+        .then(data => {
+            // Procesar datos...
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function validateId(id, context = '') {
+    if (!id || id === 'null' || id === null || id === undefined) {
+        console.error(`Invalid ID in ${context}:`, id);
+        return null;
+    }
+    
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+        console.error(`Invalid ID format in ${context}:`, id);
+        return null;
+    }
+    
+    return numericId;
+}
+// Función para enviar el formulario de seguimiento
+// function submitFollowUpForm() {
+//     const form = document.getElementById('follow-up-form');
+//     const formData = new FormData(form);
+//     const submitBtn = document.getElementById('follow-up-submit-btn');
+    
+//     // Deshabilitar botón mientras se procesa
+//     submitBtn.disabled = true;
+//     submitBtn.textContent = 'Guardando...';
+    
+//     // Determinar URL y método
+//     const method = document.getElementById('follow-up-method').value;
+//     let url = `/friendships/${currentFriendshipId}/follow-ups`;
+    
+//     if (method === 'PUT' && currentFollowUpId) {
+//         url = `/friendships/${currentFriendshipId}/follow-ups/${currentFollowUpId}`;
+//         formData.append('_method', 'PUT');
+//     }
+    
+//     fetch(url, {
+//         method: 'POST',
+//         body: formData,
+//         headers: {
+//             'X-Requested-With': 'XMLHttpRequest',
+//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+//         }
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             return response.json().then(err => Promise.reject(err));
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         if (data.success) {
+//             alert('Seguimiento guardado exitosamente');
+//             closeFollowUpModal();
+            
+//             // Recargar la página o actualizar la tabla si es necesario
+//             if (typeof window.loadFriendships === 'function') {
+//                 window.loadFriendships();
+//             } else {
+//                 location.reload();
+//             }
+//         } else {
+//             throw new Error(data.message || 'Error al guardar el seguimiento');
+//         }
+//     })
+//     .catch(error => {
+//         console.error('Error:', error);
+//         alert(error.message || 'Error al guardar el seguimiento');
+//     })
+//     .finally(() => {
+//         // Rehabilitar botón
+//         submitBtn.disabled = false;
+//         submitBtn.textContent = method === 'PUT' ? 'Actualizar Seguimiento' : 'Guardar Seguimiento';
+//     });
+// }
+
 // Función para enviar el formulario de asistencia
+// function submitAttendanceForm() {
+//     const form = document.getElementById('attendance-form');
+//     const startDate = form.querySelector('#attendance_start_date').value;
+//     const endDate = form.querySelector('#attendance_end_date').value;
+    
+//     if (!startDate || !endDate) {
+//         alert('Por favor selecciona ambas fechas (inicio y fin)');
+//         return;
+//     }
+
+//     const attendanceData = {
+//         start_date: startDate,
+//         end_date: endDate,
+//         attendance: []
+//     };
+
+//     // Recopilar datos de cada día
+//     const dateInputs = form.querySelectorAll('input[name*="[date]"]');
+    
+//     dateInputs.forEach(dateInput => {
+//         const dateStr = dateInput.value;
+//         const dateMatch = dateInput.name.match(/attendance\[(.*?)\]/);
+        
+//         if (dateMatch && dateMatch[1]) {
+//             const dateKey = dateMatch[1];
+            
+//             const buddyChecked = form.querySelector(`input[name="attendance[${dateKey}][buddy_attended]"]`)?.checked || false;
+//             const peerChecked = form.querySelector(`input[name="attendance[${dateKey}][peer_buddy_attended]"]`)?.checked || false;
+//             const notes = form.querySelector(`textarea[name="attendance[${dateKey}][notes]"]`)?.value || '';
+//             const attendanceId = form.querySelector(`input[name="attendance[${dateKey}][id]"]`)?.value || null;
+
+//             const attendanceRecord = {
+//                 date: dateStr,
+//                 buddy_attended: buddyChecked,
+//                 peer_buddy_attended: peerChecked,
+//                 notes: notes.trim()
+//             };
+
+//             // Incluir el ID si existe para indicar que es una actualización
+//             if (attendanceId && attendanceId !== '') {
+//                 attendanceRecord.id = parseInt(attendanceId);
+//             }
+
+//             attendanceData.attendance.push(attendanceRecord);
+//         }
+//     });
+
+//     const submitBtn = document.getElementById('attendance-submit-btn');
+//     submitBtn.disabled = true;
+//     submitBtn.textContent = 'Guardando...';
+
+//     fetch(`/friendships/${currentFriendshipId}/attendance`, {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+//             'Accept': 'application/json'
+//         },
+//         body: JSON.stringify(attendanceData)
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             return response.json().then(err => Promise.reject(err));
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         if (data.success) {
+//             alert(`Asistencia guardada exitosamente. Registros procesados: ${data.processed || 0}`);
+//             // Recargar los días para mostrar los cambios
+//             generateAttendanceDays();
+//             closeFollowUpModal();
+//         } else {
+//             throw new Error(data.message || 'Error al guardar');
+//         }
+//     })
+//     .catch(error => {
+//         console.error('Error:', error);
+        
+//         // Mensaje más específico para errores de duplicado
+//         if (error.message.includes('Duplicate entry')) {
+//             alert('Error: Ya existe un registro de asistencia para una o más fechas seleccionadas. Por favor verifica los datos.');
+//         } else {
+//             alert(error.message || 'Error al guardar la asistencia');
+//         }
+//     })
+//     .finally(() => {
+//         submitBtn.disabled = false;
+//         submitBtn.textContent = 'Guardar Asistencia';
+//     });
+// }
 function submitAttendanceForm() {
+    // VALIDAR QUE currentFriendshipId SEA VÁLIDO
+    if (!currentFriendshipId || currentFriendshipId === 'null' || currentFriendshipId === null) {
+        console.error('Invalid currentFriendshipId in submitAttendanceForm:', currentFriendshipId);
+        alert('Error: ID de amistad no válido');
+        return;
+    }
+    
     const form = document.getElementById('attendance-form');
     const startDate = form.querySelector('#attendance_start_date').value;
     const endDate = form.querySelector('#attendance_end_date').value;
@@ -955,4 +1428,5 @@ function submitAttendanceForm() {
         submitBtn.textContent = 'Guardar Asistencia';
     });
 }
+
  </script>

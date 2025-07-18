@@ -128,7 +128,7 @@
                                                         
                                                         <template x-if="notification.data && notification.data.action_url">
                                                             <a :href="notification.data.action_url" 
-                                                               @click="menuOpen = false"
+                                                               @click="menuOpen = false; open = false"
                                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                                 <div class="flex items-center">
                                                                     <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,7 +173,8 @@
 
         <!-- Footer del dropdown -->
         <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 rounded-b-lg">
-            <a href="{{ route('notifications.index') }}" 
+            <a href="{{ route('notifications.index') }}"
+            @click="open = false" 
                class="block text-center text-sm text-blue-600 hover:text-blue-800 font-medium">
                 Ver todas las notificaciones
             </a>
@@ -191,6 +192,8 @@ function notificationDropdown() {
         loading: false,
 
         init() {
+
+            this.open = false;
             this.loadNotifications();
             // Actualizar cada 30 segundos
             setInterval(() => {

@@ -45,7 +45,11 @@ return [
         'prefix' => '',
         'prefix_indexes' => true,
         'search_path' => 'public',
-        'sslmode' => 'prefer',
+        'sslmode' => env('DB_SSLMODE', 'require'),
+        'options' => [
+            PDO::ATTR_TIMEOUT => 30,
+            PDO::ATTR_PERSISTENT => false,
+        ],
     ],
     
     // MySQL para migración temporal

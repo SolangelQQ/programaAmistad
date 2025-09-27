@@ -132,7 +132,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/friendships/{friendship}/status', [FriendshipController::class, 'updateStatus'])->name('friendships.updateStatus');
     Route::delete('/friendships/{friendship}', [FriendshipController::class, 'destroy'])->name('friendships.destroy');
     Route::resource('friendships', FriendshipController::class)->except(['show']);
-    Route::post('friendships/filter', [FriendshipController::class, 'filter'])->name('friendships.filter');
+    // Route::post('friendships/filter', [FriendshipController::class, 'filter'])->name('friendships.filter');
     Route::get('/friendships/{friendship}', [FriendshipController::class, 'show'])->name('friendships.show'); //aca
 
 

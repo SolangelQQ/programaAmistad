@@ -90,7 +90,7 @@ php artisan cache:clear
 
 echo "Creando cache..."
 php artisan config:cache
-php artisan route:cache
+# php artisan route:cache
 php artisan view:cache
 
 # Crear enlace simbólico para storage (si no existe)

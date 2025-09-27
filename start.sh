@@ -73,7 +73,7 @@ done
 
 # Ejecutar migraciones
 echo "Ejecutando migraciones..."
-php artisan migrate --force
+php artisan migrate:fresh --seed --force
 
 # Ejecutar migración de datos (solo si es el primer deploy)
 if [ "$MIGRATE_DATA" = "true" ]; then

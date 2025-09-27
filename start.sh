@@ -73,7 +73,16 @@ done
 
 # Ejecutar migraciones
 echo "Ejecutando migraciones..."
-php artisan migrate:fresh --seed --force
+# Verificar si existen tablas
+TABLE_COUNT=$(php artisan tinker --execute="echo DB::select('SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = \'public\'')[0]->count;")
+
+if [ "$TABLE_COUNT" -eq "0" ]; then
+    echo "Base de datos vacía - ejecutando migrate:fresh con seeders..."
+    php artisan migrate:fresh --seed --force
+else
+    echo "Base de datos con tablas - solo migraciones..."
+    php artisan migrate --force
+fi
 
 # Ejecutar migración de datos (solo si es el primer deploy)
 if [ "$MIGRATE_DATA" = "true" ]; then

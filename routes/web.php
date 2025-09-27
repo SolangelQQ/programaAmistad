@@ -90,13 +90,17 @@ Route::post('/auth/google/complete-registration', [GoogleLoginController::class,
 Route::get('/auth/google/show-password', [GoogleLoginController::class, 'showGeneratedPassword'])
     ->name('google.show-password');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return view('dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/dashboard', function () {
-        return view('dashboard.index');
-    })->name('dashboard');
+// Route::get('/dashboard', function () {
+//         return view('dashboard.index');
+//     })->name('dashboard');
+// UNA SOLA RUTA PARA DASHBOARD:
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 Route::post('/register', [RegisteredUserController::class, 'store']);

@@ -25,7 +25,7 @@ DB_DATABASE="${DB_DATABASE}"
 DB_USERNAME="${DB_USERNAME}"
 DB_PASSWORD="${DB_PASSWORD}"
 
-SESSION_DRIVER=database
+SESSION_DRIVER=file
 SESSION_LIFETIME=120
 SESSION_ENCRYPT=false
 SESSION_PATH=/
@@ -47,8 +47,8 @@ MAIL_FROM_NAME="${MAIL_FROM_NAME}"
 
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=local
-QUEUE_CONNECTION=database
-CACHE_STORE=database
+QUEUE_CONNECTION=sync
+CACHE_STORE=file
 MEMCACHED_HOST=127.0.0.1
 REDIS_CLIENT=phpredis
 REDIS_HOST=127.0.0.1
@@ -73,16 +73,7 @@ done
 
 # Ejecutar migraciones
 echo "Ejecutando migraciones..."
-# Verificar si existen tablas
-TABLE_COUNT=$(php artisan tinker --execute="echo DB::select('SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = \'public\'')[0]->count;")
-
-if [ "$TABLE_COUNT" -eq "0" ]; then
-    echo "Base de datos vacía - ejecutando migrate:fresh con seeders..."
-    php artisan migrate:fresh --seed --force
-else
-    echo "Base de datos con tablas - solo migraciones..."
-    php artisan migrate --force
-fi
+php artisan migrate --force
 
 # Ejecutar migración de datos (solo si es el primer deploy)
 if [ "$MIGRATE_DATA" = "true" ]; then

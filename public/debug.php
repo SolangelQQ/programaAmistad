@@ -1,34 +1,41 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// public/debug.php - Para diagnosticar errores específicos
 
-echo "<h1>Debug Nueva BD</h1>";
+echo "<h2>🔍 Debug Info Laravel</h2>";
 
 try {
-    echo "1. Probando nueva base de datos...<br>";
+    // Cargar Laravel
+    require_once __DIR__.'/../vendor/autoload.php';
+    $app = require_once __DIR__.'/../bootstrap/app.php';
     
-    $dsn = "pgsql:host=dpg-d3bu14vdiees738uqcv0-a.oregon-postgres.render.com;port=5432;dbname=programa_amistad_ib50;sslmode=require";
-    $pdo = new PDO($dsn, 'programa_amistad_user', 'QF3h1vrWO463L9ZRMu8nPzqfgvPp1Rtk');
-    echo "✅ Conexión exitosa<br>";
+    echo "✅ Laravel cargado correctamente<br>";
     
-    // Probar tabla users
-    $stmt = $pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'users'");
-    $exists = $stmt->fetchColumn() > 0;
-    echo $exists ? "✅ Tabla users existe<br>" : "❌ Tabla users NO existe<br>";
-    
-    if ($exists) {
-        $stmt = $pdo->query("SELECT COUNT(*) FROM users");
-        $count = $stmt->fetchColumn();
-        echo "👥 Total usuarios: $count<br>";
+    // Test de base de datos
+    try {
+        $pdo = new PDO(
+            "pgsql:host=" . getenv('DB_HOST') . ";port=5432;dbname=" . getenv('DB_DATABASE'),
+            getenv('DB_USERNAME'),
+            getenv('DB_PASSWORD')
+        );
+        echo "✅ Conexión PostgreSQL exitosa<br>";
+    } catch (Exception $e) {
+        echo "❌ Error PostgreSQL: " . $e->getMessage() . "<br>";
     }
     
+    // Test de directorios
+    echo "📁 Storage writeable: " . (is_writable(__DIR__.'/../storage') ? "✅" : "❌") . "<br>";
+    echo "📁 Sessions dir exists: " . (is_dir(__DIR__.'/../storage/framework/sessions') ? "✅" : "❌") . "<br>";
+    echo "📁 Cache dir exists: " . (is_dir(__DIR__.'/../storage/framework/cache') ? "✅" : "❌") . "<br>";
+    
+    // Variables importantes
+    echo "<h3>🔧 Variables de entorno:</h3>";
+    echo "APP_KEY: " . (getenv('APP_KEY') ? "✅ Configurada" : "❌ Faltante") . "<br>";
+    echo "SESSION_DRIVER: " . getenv('SESSION_DRIVER') . "<br>";
+    echo "CACHE_STORE: " . getenv('CACHE_STORE') . "<br>";
+    echo "DB_CONNECTION: " . getenv('DB_CONNECTION') . "<br>";
+    
 } catch (Exception $e) {
-    echo "❌ ERROR: " . $e->getMessage() . "<br>";
+    echo "❌ Error general: " . $e->getMessage() . "<br>";
+    echo "Stack trace: <pre>" . $e->getTraceAsString() . "</pre>";
 }
-
-echo "<h2>Variables de entorno:</h2>";
-echo "DB_HOST: " . ($_ENV['DB_HOST'] ?? 'NO DEFINIDO') . "<br>";
-echo "DB_DATABASE: " . ($_ENV['DB_DATABASE'] ?? 'NO DEFINIDO') . "<br>";
-echo "DB_USERNAME: " . ($_ENV['DB_USERNAME'] ?? 'NO DEFINIDO') . "<br>";
-echo "FRESH_INSTALL: " . ($_ENV['FRESH_INSTALL'] ?? 'NO DEFINIDO') . "<br>";
 ?>

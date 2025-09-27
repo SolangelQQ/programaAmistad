@@ -40,6 +40,11 @@ RUN composer install --no-dev --optimize-autoloader
 # Instalar dependencias Node.js y compilar assets
 RUN npm install && npm run build
 
+RUN mkdir -p /var/www/html/storage/framework/sessions \
+    && mkdir -p /var/www/html/storage/framework/cache/data \
+    && mkdir -p /var/www/html/storage/framework/views \
+    && mkdir -p /var/www/html/storage/app/public
+
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
@@ -53,3 +58,6 @@ RUN chmod +x /usr/local/bin/start.sh
 
 # Exponer puerto
 EXPOSE 80
+
+# Usar el script de inicio
+CMD ["/usr/local/bin/start.sh"]

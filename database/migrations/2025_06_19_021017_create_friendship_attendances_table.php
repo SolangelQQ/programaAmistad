@@ -11,21 +11,21 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('friendship_attendances', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('friendship_id')->constrained()->onDelete('cascade');
-            $table->date('date');
-            $table->boolean('buddy_attended')->default(false);
-            $table->boolean('peer_buddy_attended')->default(false);
-            $table->text('notes')->nullable();
-            $table->timestamps();
+        // Schema::create('friendship_attendances', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->foreignId('friendship_id')->constrained()->onDelete('cascade');
+        //     $table->date('date');
+        //     $table->boolean('buddy_attended')->default(false);
+        //     $table->boolean('peer_buddy_attended')->default(false);
+        //     $table->text('notes')->nullable();
+        //     $table->timestamps();
             
-            $table->unique(['friendship_id', 'date']);
-        });
+        //     $table->unique(['friendship_id', 'date']);
+        // });
     }
 
     public function down()
     {
-        Schema::dropIfExists('friendship_attendances');
+        // Schema::dropIfExists('friendship_attendances');
     }
 };

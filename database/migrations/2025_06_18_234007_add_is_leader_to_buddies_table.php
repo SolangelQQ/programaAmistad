@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('buddies', function (Blueprint $table) {
-            $table->boolean('is_leader')->default(false)->after('type');
-        });
+        // Schema::table('buddies', function (Blueprint $table) {
+        //     $table->boolean('is_leader')->default(false)->after('type');
+        // });
     }
 
     /**
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('buddies', function (Blueprint $table) {
-            $table->dropColumn('is_leader');
-        });
+        // Schema::table('buddies', function (Blueprint $table) {
+        //     $table->dropColumn('is_leader');
+        // });
     }
 };
